@@ -1,97 +1,6 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>수학 진도표</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        
-        /* 공통 버튼 스타일 */
-        button.primary { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button.primary:active { background-color: #0056b3; }
-        input { width: 90%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; display: block; margin-left: auto; margin-right: auto;}
-
-        /* 화면 전환용 */
-        .screen { display: none; flex-direction: column; gap: 10px; }
-        .active { display: flex; }
-
-        /* 단원 선택 버튼들 */
-        .chapter-btn { 
-            padding: 15px; 
-            background-color: white; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 10px; 
-            font-size: 16px; 
-            font-weight: bold; 
-            color: #333; 
-            cursor: pointer; 
-            transition: 0.2s; 
-            text-align: left;
-        }
-        .chapter-btn:hover { border-color: #007bff; color: #007bff; background-color: #f0f8ff; }
-
-        /* 그리드 */
-        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .grid-item { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: white; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
-        .grid-item:active { transform: scale(0.95); }
-        
-        .status-0 { background-color: white; border-color: #ddd; }
-        .status-1 { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .status-2 { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .status-3 { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
-
-        .q-num { font-size: 12px; color: #666; margin-bottom: 2px; }
-        .q-icon { font-size: 24px; line-height: 1; }
-        
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .info-text { text-align: center; font-size: 13px; color: #555; background-color: #f8f9fa; padding: 10px; border-radius: 8px; margin-bottom: 15px; line-height: 1.6; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>📚 수학 진도표</h2>
-    <div id="loader" class="loader"></div>
-
-    <div id="screen-login" class="screen active">
-        <p style="text-align:center; color:gray;">이름과 비밀번호를 입력하세요</p>
-        <input type="text" id="input-name" placeholder="이름 (예: 조창성)">
-        <input type="password" id="input-pw" placeholder="비밀번호 (예: 3629)">
-        <button class="primary" onclick="goToChapterSelect()">로그인</button>
-    </div>
-
-    <div id="screen-chapter" class="screen">
-        <p style="text-align:center;">학습할 단원을 선택하세요</p>
-        <div id="chapter-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-        <button onclick="logout()" style="background-color:#6c757d; color:white; border:none; padding:10px; border-radius:8px; margin-top:20px;">로그아웃</button>
-    </div>
-
-    <div id="screen-game" class="screen">
-        <h3 id="game-title" style="text-align:center; margin:0 0 10px 0;"></h3>
-        
-        <div class="info-text">
-            터치하면 바뀝니다:<br>
-            ⚪(안품) ➝ 🟢(맞음) ➝ 🔴(틀림) ➝ ✅(고침)
-        </div>
-        
-        <div class="grid-container" id="grid-box"></div>
-
-        <div style="text-align:center; margin-top:10px;">
-            <div id="save-status" style="height:20px; font-size:14px;"></div>
-            <button class="primary" style="background-color: #28a745;" onclick="saveData()">💾 변경사항 저장하기</button>
-            <button onclick="goBackToChapter()" style="background-color:#6c757d; color:white; border:none; padding:10px; border-radius:8px; margin-top:10px; width:100%;">🔙 단원 목록으로</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // ★★★ 아래 주소를 선생님의 배포 ID 주소로 꼭 바꿔주세요! ★★★
+// ★★★ 선생님의 배포 ID 주소로 유지하세요 ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
+    
     let userCredentials = { name: "", pw: "" };
     let currentSheetName = "";
     let currentUserRowIndex = -1;
@@ -100,19 +9,15 @@
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
 
-    // 1. 로그인 버튼 클릭 시 -> 단원 목록 가져오기
     function goToChapterSelect() {
         const name = document.getElementById('input-name').value.trim();
         const pw = document.getElementById('input-pw').value.trim();
-
         if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; }
         
         userCredentials.name = name;
         userCredentials.pw = pw;
-
         document.getElementById('loader').style.display = 'block';
 
-        // 서버에 '단원 목록' 요청
         fetch(GOOGLE_SCRIPT_URL + "?action=getChapters")
         .then(res => res.json())
         .then(chapters => {
@@ -122,11 +27,10 @@
         })
         .catch(err => {
             document.getElementById('loader').style.display = 'none';
-            alert("연결 실패! 인터넷을 확인하세요.");
+            alert("목록 로딩 실패. 인터넷 연결을 확인하세요.");
         });
     }
 
-    // 단원 목록 그리기
     function renderChapters(chapters) {
         const list = document.getElementById('chapter-list');
         list.innerHTML = "";
@@ -139,18 +43,19 @@
         });
     }
 
-    // 2. 단원 선택 시 -> 해당 단원 데이터 불러오기
     function loadGame(sheetName) {
         currentSheetName = sheetName;
         document.getElementById('loader').style.display = 'block';
         
-        // 서버에 '해당 단원 데이터' 요청
-        fetch(GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName))
+        // ★ 캐싱 방지용 타임스탬프 추가
+        const timestamp = new Date().getTime(); 
+        const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp;
+
+        fetch(requestUrl)
         .then(res => res.json())
         .then(data => {
             document.getElementById('loader').style.display = 'none';
-            
-            // 여기서 유저 확인
+            // 데이터 비교 시 String으로 변환하여 안전하게 비교
             const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
             
             if (user) {
@@ -159,17 +64,20 @@
                 document.getElementById('game-title').innerText = `${sheetName} (${user['이름']})`;
                 renderGrid(user);
             } else {
-                alert("이 단원에는 학생 정보가 없습니다.\n(혹은 비번이 틀렸습니다)");
+                alert("학생 정보를 찾을 수 없습니다.\n(비번 확인 또는 시트에 이름이 있는지 확인)");
                 showScreen('screen-login');
             }
+        })
+        .catch(err => {
+            document.getElementById('loader').style.display = 'none';
+            alert("데이터 로딩 중 오류 발생!");
         });
     }
 
-    // 그리드 그리기
     function renderGrid(userData) {
         const gridBox = document.getElementById('grid-box');
         gridBox.innerHTML = "";
-        tempChanges = {}; // 초기화
+        tempChanges = {}; 
 
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         
@@ -180,7 +88,8 @@
             div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`;
 
             div.onclick = function() {
-                let nextVal = (parseInt(tempChanges[key] !== undefined ? tempChanges[key] : val) + 1) % 4;
+                let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val;
+                let nextVal = (current + 1) % 4;
                 
                 div.className = `grid-item ${CLASS_NAMES[nextVal]}`;
                 div.querySelector('.q-icon').innerText = ICONS[nextVal];
@@ -190,7 +99,6 @@
         });
     }
 
-    // 3. 저장하기
     function saveData() {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
@@ -200,29 +108,40 @@
         statusDiv.innerText = "저장 중...";
         statusDiv.style.color = "orange";
 
+        // ★ [수정] no-cors 제거. 이제 진짜 성공/실패 여부를 응답받습니다.
         let promises = keysToSave.map(colName => {
             return fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    sheetName: currentSheetName, // 단원 정보 포함
+                    sheetName: currentSheetName,
                     rowIndex: currentUserRowIndex,
                     colName: colName,
                     value: tempChanges[colName]
                 })
+            })
+            .then(res => res.json())
+            .then(json => {
+                 if(json.status === 'error') {
+                     throw new Error(json.message); // 에러 발생 시 catch로 이동
+                 }
             });
         });
 
-        Promise.all(promises).then(() => {
+        Promise.all(promises)
+        .then(() => {
             statusDiv.innerText = "✅ 저장 완료!";
             statusDiv.style.color = "green";
             tempChanges = {};
             setTimeout(() => { statusDiv.innerText = ""; }, 2000);
+        })
+        .catch(err => {
+            console.error(err);
+            statusDiv.innerText = "❌ 저장 실패!";
+            statusDiv.style.color = "red";
+            alert("저장에 실패했습니다.\n이유: " + err.message + "\n(Apps Script를 '새 버전'으로 배포했는지 꼭 확인하세요!)");
         });
     }
 
-    // 화면 전환 헬퍼
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
@@ -230,7 +149,3 @@
 
     function goBackToChapter() { showScreen('screen-chapter'); }
     function logout() { userCredentials = {}; location.reload(); }
-</script>
-
-</body>
-</html>
