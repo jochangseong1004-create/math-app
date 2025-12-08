@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>수학 진도표</title>
+    <style>
+        /* 1. 스타일 설정 (모바일 최적화) */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        
+        /* 로그인 화면 */
+        #login-screen { display: flex; flex-direction: column; gap: 10px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; }
+        button.primary { padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button.primary:active { background-color: #0056b3; }
+
+        /* 그리드 (지뢰찾기 스타일) */
+        .grid-container { 
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr); /* 한 줄에 5개 */
+            gap: 8px; 
+            margin-bottom: 20px; 
+        }
+        .grid-item {
+            aspect-ratio: 1; /* 정사각형 유지 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none; /* 드래그 방지 */
+            -webkit-tap-highlight-color: transparent;
+        }
+        .grid-item:active { transform: scale(0.95); }
+        
+        /* 상태별 색상 (즉각 반응) */
+        .status-0 { background-color: white; border-color: #ddd; } /* 안품 */
+        .status-1 { background-color: #d4edda; border-color: #c3e6cb; color: #155724; } /* 맞음 (초록) */
+        .status-2 { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; } /* 틀림 (빨간) */
+        .status-3 { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; } /* 고침 (파랑/체크) */
+
+        .q-num { font-size: 12px; color: #666; margin-bottom: 2px; }
+        .q-icon { font-size: 24px; line-height: 1; }
+
+        /* 저장 버튼 영역 */
+        .save-area { text-align: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+        #save-status { margin-top: 10px; font-size: 14px; color: green; height: 20px; }
+        
+        /* 로딩 스피너 */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📚 수학 진도표</h2>
+    
+    <div id="loader" class="loader"></div>
+
+    <div id="login-screen">
+        <input type="text" id="input-name" placeholder="이름 (예: 조창성)">
+        <input type="password" id="input-pw" placeholder="비밀번호 (예: 3629)">
+        <button class="primary" onclick="login()">로그인</button>
+        <p style="color:red; font-size:12px; text-align:center; display:none;" id="login-error">정보가 일치하지 않습니다.</p>
+    </div>
+
+    <div id="game-screen" style="display:none;">
+        <h3 id="welcome-msg" style="text-align:center; margin-bottom:20px;"></h3>
+        <p style="text-align:center; font-size:12px; color:gray;">터치하면 바뀝니다: ⚪ ➝ 🟢 ➝ 🔴 ➝ ✅</p>
+        
+        <div class="grid-container" id="grid-box">
+            </div>
+
+        <div class="save-area">
+            <button class="primary" style="width:100%; background-color: #28a745;" onclick="saveData()">💾 변경사항 저장하기</button>
+            <div id="save-status"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ★★★ 여기에 아까 복사한 웹 앱 URL을 넣으세요! ★★★
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec";
+    // (위 주소는 예시입니다. 본인 주소로 꼭 바꾸세요!)
+
+    let allData = [];
+    let currentUser = null;
+    let tempChanges = {}; // 변경된 사항만 임시 저장
+
+    // 0:안품, 1:맞음, 2:틀림, 3:고침
+    const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
+    const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
+
+    // 1. 시작하자마자 데이터 가져오기
+    window.onload = function() {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('login-screen').style.display = 'none';
+
+        fetch(GOOGLE_SCRIPT_URL)
+        .then(res => res.json())
+        .then(data => {
+            allData = data;
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+        })
+        .catch(err => {
+            alert("데이터 불러오기 실패! 인터넷 연결을 확인하세요.");
+            console.error(err);
+        });
+    };
+
+    // 2. 로그인 처리
+    function login() {
+        const name = document.getElementById('input-name').value.trim();
+        const pw = document.getElementById('input-pw').value.trim();
+
+        // 이름과 비번으로 유저 찾기
+        const user = allData.find(row => String(row['이름']) === name && String(row['비번']) === pw);
+
+        if (user) {
+            currentUser = user;
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('welcome-msg').innerText = `👋 안녕, ${user['이름']}!`;
+            renderGrid();
+        } else {
+            document.getElementById('login-error').style.display = 'block';
+        }
+    }
+
+    // 3. 지뢰찾기 그리드 그리기
+    function renderGrid() {
+        const gridBox = document.getElementById('grid-box');
+        gridBox.innerHTML = ""; // 초기화
+
+        // 문제 컬럼만 추출 (이름, 비번, rowIndex 제외)
+        const keys = Object.keys(currentUser).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
+        
+        keys.forEach(key => {
+            const val = parseInt(currentUser[key]) || 0; // 현재 값 (없으면 0)
+
+            // 버튼(타일) 만들기
+            const div = document.createElement('div');
+            div.className = `grid-item ${CLASS_NAMES[val]}`;
+            div.id = `btn-${key}`;
+            
+            // 내용물
+            div.innerHTML = `
+                <div class="q-num">${key}</div>
+                <div class="q-icon">${ICONS[val]}</div>
+            `;
+
+            // ★ 클릭 이벤트 (즉각 반응의 핵심!)
+            div.onclick = function() {
+                // 다음 상태 계산 (0->1->2->3->0)
+                let nextVal = (val + 1) % 4;
+                
+                // 1. 화면 즉시 변경 (CSS 클래스 교체)
+                // (기존 상태 제거하고 새 상태 추가)
+                div.className = `grid-item ${CLASS_NAMES[nextVal]}`;
+                div.querySelector('.q-icon').innerText = ICONS[nextVal];
+
+                // 2. 메모리에 임시 저장
+                currentUser[key] = nextVal; // 현재 데이터 갱신
+                tempChanges[key] = nextVal; // 변경 목록에 추가
+
+                // 3. onclick 함수도 갱신 (다음 클릭을 위해)
+                div.onclick = function() { 
+                    updateCell(div, key, nextVal); 
+                };
+            };
+            
+            // 처음 한 번만 바인딩 하기 위해 별도 함수로 분리 안 하고 일단 여기에 둠 (약식)
+            // 실제 로직은 아래 updateCell 함수 사용
+            div.onclick = () => updateCell(div, key);
+
+            gridBox.appendChild(div);
+        });
+    }
+
+    // 클릭 시 상태 업데이트 함수
+    function updateCell(element, colName) {
+        let currentVal = parseInt(currentUser[colName]) || 0;
+        let nextVal = (currentVal + 1) % 4;
+
+        // UI 즉시 반영 (딜레이 0초)
+        element.className = `grid-item ${CLASS_NAMES[nextVal]}`;
+        element.querySelector('.q-icon').innerText = ICONS[nextVal];
+
+        // 데이터 반영
+        currentUser[colName] = nextVal;
+        tempChanges[colName] = nextVal;
+    }
+
+    // 4. 저장하기 (서버 통신)
+    function saveData() {
+        const statusDiv = document.getElementById('save-status');
+        const keysToSave = Object.keys(tempChanges);
+
+        if (keysToSave.length === 0) {
+            statusDiv.innerText = "변경사항이 없습니다.";
+            return;
+        }
+
+        statusDiv.innerText = "저장 중...";
+        statusDiv.style.color = "orange";
+
+        // 변경된 것들을 하나씩(혹은 한꺼번에) 서버로 보냄
+        // 간단하게 하기 위해 순차적으로 보냄 (비동기 병렬 처리 가능하지만 안정성 위해)
+        
+        let promises = keysToSave.map(colName => {
+            return fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors', // CORS 문제 회피
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    rowIndex: currentUser['rowIndex'],
+                    colName: colName,
+                    value: tempChanges[colName]
+                })
+            });
+        });
+
+        Promise.all(promises)
+        .then(() => {
+            statusDiv.innerText = "✅ 모든 변경사항이 저장되었습니다!";
+            statusDiv.style.color = "green";
+            tempChanges = {}; // 임시 저장소 비우기
+            setTimeout(() => { statusDiv.innerText = ""; }, 3000);
+        })
+        .catch(err => {
+            statusDiv.innerText = "❌ 저장 실패! 다시 시도해주세요.";
+            statusDiv.style.color = "red";
+        });
+    }
+</script>
+
+</body>
+</html>
