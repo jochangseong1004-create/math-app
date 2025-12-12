@@ -6,6 +6,24 @@
     <title>수학 진도표</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* =========================================
+           🎨 [색상 변경 구역] 여기서 티어 색을 바꾸세요!
+           ========================================= */
+        /* 각 줄의 #xxxxxx 코드를 원하는 색상 코드로 바꾸면 됩니다. */
+        /* 그라데이션이므로 색상 두 개를 고르세요 (왼쪽 색 -> 오른쪽 색) */
+        
+        .tier-iron { background: linear-gradient(45deg, #585858, #3a3a3a); }       /* 아이언 (진한 회색) */
+        .tier-bronze { background: linear-gradient(45deg, #cd7f32, #a05a2c); }     /* 브론즈 (동색) */
+        .tier-silver { background: linear-gradient(45deg, #c0c0c0, #909090); }     /* 실버 (은색) */
+        .tier-gold { background: linear-gradient(45deg, #ffd700, #daa520); }       /* 골드 (금색) */
+        .tier-platinum { background: linear-gradient(45deg, #00ced1, #008b8b); }   /* 플래티넘 (청록색) */
+        .tier-diamond { background: linear-gradient(45deg, #b9f2ff, #00bfff); color: #005f99; text-shadow: none; } /* 다이아 (하늘색) */
+        /* 챌린저는 빛나는 효과가 추가되어 있습니다 */
+        .tier-challenger { background: linear-gradient(45deg, #ff4e50, #f9d423); border: 2px solid gold; box-shadow: 0 0 10px gold; }
+
+        /* =========================================
+           여기서부터는 건드리지 않으셔도 됩니다.
+           ========================================= */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px; }
         .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         h2 { text-align: center; color: #333; margin-bottom: 20px; }
@@ -19,23 +37,17 @@
         .screen { display: none; flex-direction: column; gap: 10px; }
         .active { display: flex; }
 
-        /* 티어 배지 */
-        .tier-badge { text-align: center; margin-bottom: 15px; padding: 10px; border-radius: 10px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); transition: 0.3s; }
-        .tier-iron { background: linear-gradient(45deg, #585858, #3a3a3a); }
-        .tier-bronze { background: linear-gradient(45deg, #cd7f32, #a05a2c); }
-        .tier-silver { background: linear-gradient(45deg, #c0c0c0, #909090); }
-        .tier-gold { background: linear-gradient(45deg, #ffd700, #daa520); }
-        .tier-platinum { background: linear-gradient(45deg, #00ced1, #008b8b); }
-        .tier-diamond { background: linear-gradient(45deg, #b9f2ff, #00bfff); color: #005f99; text-shadow: none; }
-        .tier-challenger { background: linear-gradient(45deg, #ff4e50, #f9d423); border: 2px solid gold; box-shadow: 0 0 10px gold; }
+        /* 티어 배지 기본 스타일 (아이콘 배치를 위해 flex 적용) */
+        .tier-badge { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; padding: 12px; border-radius: 12px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); transition: 0.3s; font-size: 18px;}
+        .tier-icon { font-size: 28px; margin-right: 10px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3)); }
 
-        /* 필터 */
+        /* 필터 스타일 */
         .filter-options { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .filter-label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; user-select: none; }
         
         .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
         .grid-item { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: white; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
-        .grid-item.hidden { display: none; }
+        .grid-item.hidden { display: none; } /* 필터링용 */
         
         .status-0 { background-color: white; border-color: #ddd; }
         .status-1 { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
@@ -50,7 +62,7 @@
         
         .chart-container { width: 50%; margin: 0 auto 10px auto; }
         
-        /* 팝업 */
+        /* 분석 팝업 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
         .modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .analysis-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #007bff; }
@@ -83,7 +95,10 @@
     <div id="screen-game" class="screen">
         <h3 id="game-title" style="text-align:center; margin:0 0 10px 0;"></h3>
         
-        <div id="tier-badge" class="tier-badge tier-iron">Tier: Iron</div>
+        <div id="tier-badge" class="tier-badge tier-iron">
+            <span class="tier-icon">🛡️</span> <span>IRON (0%)</span>
+        </div>
+
         <div class="chart-container"><canvas id="progressChart"></canvas></div>
 
         <div class="filter-options">
@@ -126,6 +141,17 @@
 
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
+
+    // [추가됨] 티어별 아이콘 정의
+    const TIER_ICONS = {
+        "CHALLENGER": "👑", // 왕관
+        "DIAMOND": "💎",    // 보석
+        "PLATINUM": "💠",   // 다이아몬드 모양
+        "GOLD": "🥇",       // 금메달
+        "SILVER": "🥈",     // 은메달
+        "BRONZE": "🥉",     // 동메달
+        "IRON": "🛡️"        // 방패
+    };
 
     function goToChapterSelect() {
         const name = document.getElementById('input-name').value.trim();
@@ -258,6 +284,7 @@
         });
     }
 
+    // ★★★ [수정됨] 티어 계산 및 아이콘 표시 함수 ★★★
     function updateTier(userData) {
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         let total = keys.length;
@@ -279,7 +306,8 @@
         else { tierName = "IRON"; tierClass = "tier-iron"; }
 
         badge.className = `tier-badge ${tierClass}`;
-        badge.innerText = `${tierName} (${Math.round(percent)}%)`;
+        // [수정] 아이콘과 텍스트를 함께 넣어줍니다.
+        badge.innerHTML = `<span class="tier-icon">${TIER_ICONS[tierName]}</span> <span>${tierName} (${Math.round(percent)}%)</span>`;
     }
 
     function updateChart(userData) {
@@ -356,7 +384,6 @@
         }
     }
 
-    // ★★★ [수정됨] 배치 저장 및 텔레그램 연동 함수 ★★★
     function saveData() {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
@@ -372,14 +399,13 @@
 
         const badge = document.getElementById('tier-badge').innerText;
 
-        // 배치 저장 요청 보내기 (action: saveBatch)
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
                 action: "saveBatch",
                 sheetName: currentSheetName,
                 rowIndex: currentUserRowIndex,
-                changes: tempChanges, // 변경된 데이터 묶음
+                changes: tempChanges,
                 studentName: userCredentials.name,
                 tierInfo: badge
             })
