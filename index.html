@@ -372,48 +372,75 @@
         }
     }
 
-    function saveData() {
-        const statusDiv = document.getElementById('save-status');
-        const keysToSave = Object.keys(tempChanges);
-        if (keysToSave.length === 0) { statusDiv.innerText = "변경사항 없음"; return; }
+function saveData() {
+  const statusDiv = document.getElementById('save-status');
+  const keysToSave = Object.keys(tempChanges);
 
-        statusDiv.innerText = "저장 및 알림 전송 중...";
-        statusDiv.style.color = "orange";
+  if (keysToSave.length === 0) {
+    statusDiv.innerText = "변경사항 없음";
+    statusDiv.style.color = "gray";
+    return;
+  }
 
-        // ★ 알림에 보낼 정보 (티어)
-        let badge = document.getElementById('tier-badge').innerText;
-        
-        let promises = keysToSave.map(colName => {
-            return fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify({
-                    sheetName: currentSheetName,
-                    rowIndex: currentUserRowIndex,
-                    colName: colName,
-                    value: tempChanges[colName],
-                    studentName: userCredentials.name,
-                    tierInfo: badge,
-                    isLast: colName === keysToSave[keysToSave.length-1] 
-                })
-            })
-            .then(res => res.json())
-            .then(json => { if(json.status === 'error') throw new Error(json.message); });
-        });
+  statusDiv.innerText = "저장 및 알림 전송 중...";
+  statusDiv.style.color = "orange";
 
-        Promise.all(promises)
-        .then(() => {
-            statusDiv.innerText = "✅ 저장 & 알림 완료!";
-            statusDiv.style.color = "green";
-            tempChanges = {};
-            setTimeout(() => { statusDiv.innerText = ""; }, 2000);
-            loadGame(currentSheetName);
-        })
-        .catch(err => {
-            statusDiv.innerText = "❌ 저장 실패!";
-            statusDiv.style.color = "red";
-            alert("저장 실패. 앱을 다시 실행해주세요.");
-        });
+  // 알림에 보낼 티어 정보
+  const badge = document.getElementById('tier-badge').innerText;
+
+  // ✅ POST 1번으로 "배치 저장" 요청
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: 'POST',
+    // ⚠️ Apps Script CORS/프리플라이트 회피를 위해 JSON 헤더를 굳이 안 붙입니다.
+    // (body는 문자열이라 e.postData.contents로 정상 수신됨)
+    body: JSON.stringify({
+      action: "saveBatch",
+      sheetName: currentSheetName,
+      rowIndex: currentUserRowIndex,
+      changes: tempChanges,            // { "1": 2, "2": 1, ... } 형태
+      studentName: userCredentials.name,
+      tierInfo: badge
+    })
+  })
+  .then(async (res) => {
+    const text = await res.text();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      throw new Error("서버 응답이 JSON이 아닙니다: " + text);
     }
+    return json;
+  })
+  .then(json => {
+    if (json.status !== "success") {
+      throw new Error(json.message || "저장 실패");
+    }
+
+    // 저장은 성공했는데 텔레그램이 실패한 경우
+    if (json.telegram && json.telegram.status === "error") {
+      statusDiv.innerText = "✅ 저장 완료 (⚠️ 알림 실패)";
+      statusDiv.style.color = "orange";
+      console.warn("Telegram failed:", json.telegram.message);
+      alert("저장은 완료됐지만 텔레그램 알림 전송이 실패했습니다.\n(서버 로그를 확인하세요)");
+    } else {
+      statusDiv.innerText = "✅ 저장 & 알림 완료!";
+      statusDiv.style.color = "green";
+    }
+
+    // 변경사항 초기화 + 화면 갱신
+    tempChanges = {};
+    setTimeout(() => { statusDiv.innerText = ""; }, 2000);
+    loadGame(currentSheetName);
+  })
+  .catch(err => {
+    statusDiv.innerText = "❌ 저장 실패!";
+    statusDiv.style.color = "red";
+    console.error(err);
+    alert("저장/전송 실패: " + (err.message || err));
+  });
+}
+
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
