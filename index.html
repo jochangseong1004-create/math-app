@@ -49,12 +49,11 @@
         button.primary { background-color: var(--toss-blue); color: white; }
         button.analyze { background-color: #E8F3FF; color: var(--toss-blue); }
 
-        /* [수정 1] box-sizing 추가하여 너비 문제 해결 */
         input, select {
             width: 100%; padding: 16px; margin-bottom: 12px; border: none;
             background-color: #F9FAFB; border-radius: var(--radius-M);
             font-size: 17px; font-family: inherit;
-            box-sizing: border-box; /* 패딩 포함 너비 계산 */
+            box-sizing: border-box; 
         }
         input:focus, select:focus { outline: 2px solid var(--toss-blue); background: white; }
 
@@ -67,7 +66,7 @@
             margin-bottom: 20px; padding: 16px; border-radius: var(--radius-L);
             font-weight: 700; color: white; font-size: 18px;
             box-shadow: var(--card-shadow);
-            flex-direction: column; /* 순위 표시를 위해 세로 정렬 */
+            flex-direction: column; 
             gap: 5px;
         }
         .tier-row { display: flex; align-items: center; }
@@ -113,17 +112,22 @@
         .q-num { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
         .q-icon { font-size: 24px; }
         
-        /* 로딩 스피너 (중앙 정렬 강화) */
+        /* 로딩 스피너 */
         .loader-wrapper { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; border-radius: var(--radius-L); }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--toss-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .chart-container { width: 65%; margin: 0 auto 20px auto; position: relative; }
         
+        /* 모달 스타일 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-M); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); text-align: left;}
         
+        /* 분석 박스 스타일 */
+        .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-M); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); text-align: left; }
+        /* 경고 박스 (회색) */
+        .warning-box { background: #F2F4F6; padding: 14px; border-radius: var(--radius-M); margin-top: 15px; color: var(--toss-text-gray); font-size: 13px; text-align: center; }
+
         .modal-btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
         .btn-yes { background-color: var(--toss-blue); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 600; }
         .btn-no { background-color: #FFEBEB; color: #E31A1A; padding: 14px; border: none; border-radius: 12px; font-weight: 600; }
@@ -211,7 +215,7 @@
 </div>
 
 <script>
-    // ★★★ 선생님 URL ★★★
+    // ★★★ 선생님 URL로 교체 필수 ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     // 뾱! 소리
@@ -231,7 +235,6 @@
         osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    // 로딩 토글 함수
     function toggleLoader(show) {
         document.getElementById('global-loader').style.display = show ? 'flex' : 'none';
     }
@@ -282,13 +285,12 @@
         if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; }
         userCredentials.name = name;
         userCredentials.pw = pw;
-        
-        toggleLoader(true); // 로딩 시작
+        toggleLoader(true);
 
         fetch(GOOGLE_SCRIPT_URL + "?action=getChapters")
         .then(res => res.json())
         .then(chapters => {
-            toggleLoader(false); // 로딩 끝
+            toggleLoader(false);
             allChapters = chapters; 
             showScreen('screen-chapter');
             setupClassFilter(chapters);
@@ -337,7 +339,6 @@
     function loadGame(sheetName) {
         currentSheetName = sheetName;
         history.pushState({page: 'game'}, document.title, "#game");
-
         toggleLoader(true);
         const timestamp = new Date().getTime(); 
         const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp;
@@ -348,7 +349,6 @@
             toggleLoader(false);
             currentClassData = data;
             const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
-            
             if (user) {
                 currentUserRowIndex = user['rowIndex'];
                 showScreen('screen-game');
@@ -372,24 +372,20 @@
         gridBox.innerHTML = "";
         tempChanges = {}; 
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
-        
         keys.forEach(key => {
             const val = parseInt(userData[key]) || 0;
             const div = document.createElement('button');
             div.className = `grid-item ${CLASS_NAMES[val]}`;
             div.dataset.val = val;
             div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`;
-
             div.onclick = function() {
                 playPopSound(); 
-                
                 let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val;
                 let nextVal = (current + 1) % 4;
                 div.className = `grid-item ${CLASS_NAMES[nextVal]}`;
                 div.dataset.val = nextVal;
                 div.querySelector('.q-icon').innerText = ICONS[nextVal];
                 tempChanges[key] = nextVal;
-                
                 let previewData = {...userData, ...tempChanges};
                 updateChart(previewData);
                 updateTier(previewData);
@@ -414,13 +410,10 @@
         });
     }
 
-    // ★★★ [수정 3] 순위 계산 로직 추가 ★★★
     function getRank(myData, allData) {
-        // 문제 키 목록
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         if (keys.length === 0) return "-";
-
-        // 각 학생별 점수(완료 개수) 계산
+        
         let scores = allData.map(student => {
             let score = 0;
             keys.forEach(k => {
@@ -430,25 +423,18 @@
             return { name: student['이름'], score: score };
         });
 
-        // 내 점수 (임시 변경사항 포함해서 계산해야 실시간 반영됨)
         let myScore = 0;
         keys.forEach(k => {
             let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
             if (val === 1 || val === 3) myScore++;
         });
 
-        // 내 점수로 리스트 갱신 (다른 학생들은 DB기준, 나는 현재화면 기준)
         let myEntryIndex = scores.findIndex(s => s.name === myData['이름']);
         if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore;
 
-        // 점수 내림차순 정렬
         scores.sort((a, b) => b.score - a.score);
-
-        // 내 순위 찾기
         let rank = scores.findIndex(s => s.name === myData['이름']) + 1;
-        let totalStudents = scores.length;
-
-        return `${rank}위 / ${totalStudents}명`;
+        return `${rank}위 / ${scores.length}명`;
     }
 
     function updateTier(userData) {
@@ -471,9 +457,7 @@
         else if (percent >= 10) { tierName = "BRONZE"; tierClass = "tier-bronze"; tierIcon = "🥉"; }
         else { tierName = "IRON"; tierClass = "tier-iron"; tierIcon = "🛡️"; }
 
-        // 순위 가져오기
         let rankText = getRank(userData, currentClassData);
-
         badge.className = `tier-badge ${tierClass}`;
         badge.innerHTML = `
             <div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span></div>
@@ -547,46 +531,77 @@
         });
     }
 
+    // ★★★ [수정 4] 묶음 분석 및 참여율 경고 추가 ★★★
     function analyzePerformance() {
         if (!currentClassData || currentClassData.length === 0) return;
         let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
         let myStatus = {...myData, ...tempChanges}; 
         let questionStats = {};
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
+        
+        let participatedCount = 0; // 제출한 학생 수 카운트
+
         keys.forEach(key => {
             let correctCount = 0;
             let totalStudents = 0;
             currentClassData.forEach(student => {
                 let val = parseInt(student[key]) || 0;
-                if (val === 1) correctCount++; 
+                if (val === 1) correctCount++; // 1:맞음 만 정답률로 계산 (엄격)
                 totalStudents++;
             });
+            // 한 문제라도 0(안품)이 아니면 참여로 간주 (단순화)
+            let hasActivity = currentClassData.filter(s => keys.some(k => parseInt(s[k]) > 0)).length;
+            participatedCount = hasActivity; // 실제로는 forEach 밖에서 해야 정확하지만, 여기선 약식으로 처리
+
             let count1 = currentClassData.filter(s => parseInt(s[key]) === 1).length;
-            questionStats[key] = (count1 / totalStudents) * 100;
+            questionStats[key] = totalStudents === 0 ? 0 : (count1 / totalStudents) * 100;
         });
 
+        // 실제 참여자 수 재계산 (정확도 향상)
+        participatedCount = 0;
+        currentClassData.forEach(s => {
+            // 안 푼 문제(0)가 아닌 게 하나라도 있으면 참여자로 인정
+            if(keys.some(k => parseInt(s[k]) > 0)) participatedCount++;
+        });
+        let participationRate = participatedCount / currentClassData.length;
+
+
+        // 1. 실수 주의 (아쉬운 문제) 그룹화
+        // 조건: 내 상태 2(틀림) or 3(고침) 인 것 중
         let regretList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 2 || s === 3; });
-        regretList.sort((a, b) => questionStats[b] - questionStats[a]); 
-        let regretItem = regretList.length > 0 ? regretList[0] : null;
-
-        let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; });
-        proudList.sort((a, b) => questionStats[a] - questionStats[b]); 
-        let proudItem = proudList.length > 0 ? proudList[0] : null;
-
-        let html = "";
-        if (regretItem) {
-            let rate = Math.round(questionStats[regretItem]);
-            html += `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${regretItem}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`;
+        let regretHtml = "";
+        if (regretList.length > 0) {
+            // 정답률 최댓값 찾기
+            let maxRate = Math.max(...regretList.map(q => questionStats[q]));
+            // 최댓값과 같은 문제들 모두 찾기
+            let topRegretQs = regretList.filter(q => questionStats[q] === maxRate);
+            let qText = topRegretQs.join(', ');
+            let rate = Math.round(maxRate);
+            regretHtml = `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${qText}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`;
         } else {
-            html += `<div class="analysis-box">👍 실수 방어 성공!</div>`;
+            regretHtml = `<div class="analysis-box">👍 실수 방어 성공!</div>`;
         }
 
-        if (proudItem) {
-            let rate = Math.round(questionStats[proudItem]);
-            html += `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${proudItem}번을 고쳐냈군요! 대단합니다.</div>`;
+        // 2. 킬러 정복 (장한 문제) 그룹화
+        // 조건: 내 상태 3(고침) 인 것 중
+        let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; });
+        let proudHtml = "";
+        if (proudList.length > 0) {
+            // 정답률 최솟값 찾기
+            let minRate = Math.min(...proudList.map(q => questionStats[q]));
+            // 최솟값과 같은 문제들 모두 찾기
+            let topProudQs = proudList.filter(q => questionStats[q] === minRate);
+            let qText = topProudQs.join(', ');
+            let rate = Math.round(minRate);
+            proudHtml = `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${qText}번을 고쳐냈군요! 대단합니다.</div>`;
         }
 
-        document.getElementById('analysis-content').innerHTML = html;
+        let warningHtml = "";
+        if (participationRate < 0.5) {
+            warningHtml = `<div class="warning-box">⚠️ 아직 제출한 친구가 적어서(${participatedCount}명) 분석이 부정확할 수 있어요.</div>`;
+        }
+
+        document.getElementById('analysis-content').innerHTML = regretHtml + (proudHtml || "") + warningHtml;
         document.getElementById('analysis-modal').style.display = 'flex';
     }
 
@@ -607,7 +622,6 @@
             return;
         }
 
-        // [수정 2] 저장 시에도 로딩 스피너 띄움
         toggleLoader(true); 
         statusDiv.innerText = "저장 및 제출 중...";
         
@@ -626,7 +640,7 @@
         })
         .then(res => res.json())
         .then(json => {
-            toggleLoader(false); // 로딩 끝
+            toggleLoader(false); 
             if (json.status !== "success") {
                 throw new Error(json.message || "저장 실패");
             }
