@@ -60,26 +60,82 @@
         .screen { display: none; flex-direction: column; }
         .active { display: flex; }
 
-        /* 티어 배지 */
+        /* =========================================
+           ✨ [업그레이드] 티어 배지 스타일
+           ========================================= */
         .tier-badge {
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 20px; padding: 16px; border-radius: var(--radius-L);
-            font-weight: 700; color: white; font-size: 18px;
-            box-shadow: var(--card-shadow);
-            flex-direction: column; 
-            gap: 5px;
+            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            margin-bottom: 24px; padding: 24px 20px; 
+            border-radius: 20px;
+            color: white; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* 그림자 강화 */
+            overflow: hidden; /* 빛반사 효과가 밖으로 안 나가게 */
+            transition: 0.3s;
         }
-        .tier-row { display: flex; align-items: center; }
-        .tier-icon { font-size: 28px; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
-        .rank-text { font-size: 14px; opacity: 0.9; font-weight: 500; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 10px; margin-top: 5px; }
 
-        .tier-iron { background: linear-gradient(135deg, #585858, #3a3a3a); }
-        .tier-bronze { background: linear-gradient(135deg, #cd7f32, #a05a2c); }
-        .tier-silver { background: linear-gradient(135deg, #c0c0c0, #909090); }
-        .tier-gold { background: linear-gradient(135deg, #ffd700, #daa520); }
-        .tier-platinum { background: linear-gradient(135deg, #00ced1, #008b8b); }
-        .tier-diamond { background: linear-gradient(135deg, #b9f2ff, #00bfff); color: #005f99; }
-        .tier-challenger { background: linear-gradient(135deg, #ff4e50, #f9d423); border: 3px solid gold; }
+        /* 반짝이는 효과 (Shine Animation) */
+        .tier-badge::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -150%;
+            width: 100%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+        @keyframes shine {
+            0% { left: -150%; }
+            20% { left: 150%; } /* 슉 지나감 */
+            100% { left: 150%; } /* 대기 */
+        }
+
+        .tier-row { 
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1; /* 배경보다 위에 */
+            margin-bottom: 12px;
+        }
+        .tier-icon { 
+            font-size: 36px; margin-right: 12px; 
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); /* 아이콘 입체감 */
+        }
+        .tier-name { font-size: 24px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        
+        .rank-text { 
+            font-size: 14px; font-weight: 600; 
+            background: rgba(0, 0, 0, 0.25); 
+            padding: 6px 14px; border-radius: 20px; 
+            z-index: 1;
+            backdrop-filter: blur(4px);
+        }
+
+        /* 프로그레스 바 배경 */
+        .tier-progress-bg {
+            width: 100%; height: 6px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 3px;
+            margin-top: 15px;
+            z-index: 1;
+            overflow: hidden;
+        }
+        /* 프로그레스 바 채움 */
+        .tier-progress-fill {
+            height: 100%;
+            background: white;
+            width: 0%; /* JS로 제어 */
+            border-radius: 3px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 10px rgba(255,255,255,0.8);
+        }
+
+        /* 티어별 색상 (더 고급스러운 그라데이션) */
+        .tier-iron { background: linear-gradient(135deg, #434343 0%, #2b2b2b 100%); }
+        .tier-bronze { background: linear-gradient(135deg, #cd7f32 0%, #a05a2c 100%); }
+        .tier-silver { background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%); }
+        .tier-gold { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); } /* 로즈골드 느낌 */
+        .tier-platinum { background: linear-gradient(135deg, #00cdac 0%, #009688 100%); }
+        .tier-diamond { background: linear-gradient(135deg, #5EFCE8 0%, #736EFE 100%); } /* 화려한 오로라 */
+        .tier-challenger { background: linear-gradient(135deg, #FDFC47 0%, #24FE41 100%); border: 2px solid white; }
 
         /* 필터 */
         .filter-options { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -123,9 +179,7 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         
-        /* 분석 박스 스타일 */
         .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-M); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); text-align: left; }
-        /* 경고 박스 (회색) */
         .warning-box { background: #F2F4F6; padding: 14px; border-radius: var(--radius-M); margin-top: 15px; color: var(--toss-text-gray); font-size: 13px; text-align: center; }
 
         .modal-btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
@@ -163,8 +217,15 @@
         <h3 id="game-title" style="text-align:center; margin:0 0 20px 0;"></h3>
         
         <div id="tier-badge" class="tier-badge tier-iron">
-            <div class="tier-row"><span class="tier-icon">🛡️</span> <span>IRON (0%)</span></div>
+            <div class="tier-row">
+                <span class="tier-icon">🛡️</span> 
+                <span class="tier-name">IRON</span>
+            </div>
             <div class="rank-text" id="rank-display">순위 계산중...</div>
+            
+            <div class="tier-progress-bg">
+                <div id="tier-progress-fill" class="tier-progress-fill"></div>
+            </div>
         </div>
 
         <div class="chart-container">
@@ -215,7 +276,7 @@
 </div>
 
 <script>
-    // ★★★ 선생님 URL로 교체 필수 ★★★
+    // ★★★ 선생님 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     // 뾱! 소리
@@ -413,7 +474,6 @@
     function getRank(myData, allData) {
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         if (keys.length === 0) return "-";
-        
         let scores = allData.map(student => {
             let score = 0;
             keys.forEach(k => {
@@ -422,16 +482,13 @@
             });
             return { name: student['이름'], score: score };
         });
-
         let myScore = 0;
         keys.forEach(k => {
             let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
             if (val === 1 || val === 3) myScore++;
         });
-
         let myEntryIndex = scores.findIndex(s => s.name === myData['이름']);
         if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore;
-
         scores.sort((a, b) => b.score - a.score);
         let rank = scores.findIndex(s => s.name === myData['이름']) + 1;
         return `${rank}위 / ${scores.length}명`;
@@ -460,8 +517,12 @@
         let rankText = getRank(userData, currentClassData);
         badge.className = `tier-badge ${tierClass}`;
         badge.innerHTML = `
-            <div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span></div>
+            <div class="tier-row">
+                <span class="tier-icon">${tierIcon}</span> 
+                <span class="tier-name">${tierName}</span>
+            </div>
             <div class="rank-text">현재 순위 : ${rankText}</div>
+            <div class="tier-progress-bg"><div id="tier-progress-fill" class="tier-progress-fill" style="width:${percent}%"></div></div>
         `;
     }
 
@@ -531,7 +592,6 @@
         });
     }
 
-    // ★★★ [수정 4] 묶음 분석 및 참여율 경고 추가 ★★★
     function analyzePerformance() {
         if (!currentClassData || currentClassData.length === 0) return;
         let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
@@ -539,41 +599,29 @@
         let questionStats = {};
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         
-        let participatedCount = 0; // 제출한 학생 수 카운트
-
+        let participatedCount = 0;
         keys.forEach(key => {
             let correctCount = 0;
             let totalStudents = 0;
             currentClassData.forEach(student => {
                 let val = parseInt(student[key]) || 0;
-                if (val === 1) correctCount++; // 1:맞음 만 정답률로 계산 (엄격)
+                if (val === 1) correctCount++; 
                 totalStudents++;
             });
-            // 한 문제라도 0(안품)이 아니면 참여로 간주 (단순화)
-            let hasActivity = currentClassData.filter(s => keys.some(k => parseInt(s[k]) > 0)).length;
-            participatedCount = hasActivity; // 실제로는 forEach 밖에서 해야 정확하지만, 여기선 약식으로 처리
-
             let count1 = currentClassData.filter(s => parseInt(s[key]) === 1).length;
             questionStats[key] = totalStudents === 0 ? 0 : (count1 / totalStudents) * 100;
         });
 
-        // 실제 참여자 수 재계산 (정확도 향상)
         participatedCount = 0;
         currentClassData.forEach(s => {
-            // 안 푼 문제(0)가 아닌 게 하나라도 있으면 참여자로 인정
             if(keys.some(k => parseInt(s[k]) > 0)) participatedCount++;
         });
         let participationRate = participatedCount / currentClassData.length;
 
-
-        // 1. 실수 주의 (아쉬운 문제) 그룹화
-        // 조건: 내 상태 2(틀림) or 3(고침) 인 것 중
         let regretList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 2 || s === 3; });
         let regretHtml = "";
         if (regretList.length > 0) {
-            // 정답률 최댓값 찾기
             let maxRate = Math.max(...regretList.map(q => questionStats[q]));
-            // 최댓값과 같은 문제들 모두 찾기
             let topRegretQs = regretList.filter(q => questionStats[q] === maxRate);
             let qText = topRegretQs.join(', ');
             let rate = Math.round(maxRate);
@@ -582,14 +630,10 @@
             regretHtml = `<div class="analysis-box">👍 실수 방어 성공!</div>`;
         }
 
-        // 2. 킬러 정복 (장한 문제) 그룹화
-        // 조건: 내 상태 3(고침) 인 것 중
         let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; });
         let proudHtml = "";
         if (proudList.length > 0) {
-            // 정답률 최솟값 찾기
             let minRate = Math.min(...proudList.map(q => questionStats[q]));
-            // 최솟값과 같은 문제들 모두 찾기
             let topProudQs = proudList.filter(q => questionStats[q] === minRate);
             let qText = topProudQs.join(', ');
             let rate = Math.round(minRate);
