@@ -19,7 +19,7 @@
         .screen { display: none; flex-direction: column; gap: 10px; }
         .active { display: flex; }
 
-        /* 티어 배지 스타일 */
+        /* 티어 배지 */
         .tier-badge { text-align: center; margin-bottom: 15px; padding: 10px; border-radius: 10px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); transition: 0.3s; }
         .tier-iron { background: linear-gradient(45deg, #585858, #3a3a3a); }
         .tier-bronze { background: linear-gradient(45deg, #cd7f32, #a05a2c); }
@@ -29,13 +29,13 @@
         .tier-diamond { background: linear-gradient(45deg, #b9f2ff, #00bfff); color: #005f99; text-shadow: none; }
         .tier-challenger { background: linear-gradient(45deg, #ff4e50, #f9d423); border: 2px solid gold; box-shadow: 0 0 10px gold; }
 
-        /* 필터 스타일 */
+        /* 필터 */
         .filter-options { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
         .filter-label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; user-select: none; }
         
         .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
         .grid-item { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: white; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
-        .grid-item.hidden { display: none; } /* 필터링용 */
+        .grid-item.hidden { display: none; }
         
         .status-0 { background-color: white; border-color: #ddd; }
         .status-1 { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
@@ -50,9 +50,9 @@
         
         .chart-container { width: 50%; margin: 0 auto 10px auto; }
         
-        /* 분석 팝업 */
+        /* 팝업 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: left; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .analysis-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #007bff; }
     </style>
 </head>
@@ -84,10 +84,7 @@
         <h3 id="game-title" style="text-align:center; margin:0 0 10px 0;"></h3>
         
         <div id="tier-badge" class="tier-badge tier-iron">Tier: Iron</div>
-
-        <div class="chart-container">
-            <canvas id="progressChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="progressChart"></canvas></div>
 
         <div class="filter-options">
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0">⚪안품</label>
@@ -116,7 +113,7 @@
 </div>
 
 <script>
-    // ★★★ 선생님이 쓰시던 URL 그대로 사용합니다 ★★★
+    // ★★★ 여기에 선생님의 배포 URL을 넣어주세요! ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     let userCredentials = { name: "", pw: "" };
@@ -126,7 +123,6 @@
     let allChapters = []; 
     let myChart = null;
     let currentClassData = [];
-    let currentUserData = {}; // 현재 유저 데이터
 
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
@@ -135,7 +131,6 @@
         const name = document.getElementById('input-name').value.trim();
         const pw = document.getElementById('input-pw').value.trim();
         if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; }
-        
         userCredentials.name = name;
         userCredentials.pw = pw;
         document.getElementById('loader').style.display = 'block';
@@ -151,7 +146,7 @@
         })
         .catch(err => {
             document.getElementById('loader').style.display = 'none';
-            alert("목록 로딩 실패. 새로고침 해주세요.");
+            alert("목록 로딩 실패. 인터넷 연결을 확인하세요.");
         });
     }
 
@@ -198,17 +193,15 @@
         .then(data => {
             document.getElementById('loader').style.display = 'none';
             currentClassData = data;
-
             const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
             
             if (user) {
                 currentUserRowIndex = user['rowIndex'];
-                currentUserData = user; // 저장
                 showScreen('screen-game');
                 document.getElementById('game-title').innerText = `${sheetName} - ${user['이름']}`;
                 renderGrid(user);
                 updateChart(user);
-                updateTier(user); // 티어 업데이트
+                updateTier(user);
             } else {
                 alert("학생 정보를 찾을 수 없습니다.");
                 showScreen('screen-login');
@@ -224,41 +217,36 @@
         const gridBox = document.getElementById('grid-box');
         gridBox.innerHTML = "";
         tempChanges = {}; 
-
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         
         keys.forEach(key => {
             const val = parseInt(userData[key]) || 0;
             const div = document.createElement('div');
             div.className = `grid-item ${CLASS_NAMES[val]}`;
-            div.dataset.val = val; // 필터링용
+            div.dataset.val = val;
             div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`;
 
             div.onclick = function() {
                 let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val;
                 let nextVal = (current + 1) % 4;
-                
                 div.className = `grid-item ${CLASS_NAMES[nextVal]}`;
                 div.dataset.val = nextVal;
                 div.querySelector('.q-icon').innerText = ICONS[nextVal];
                 tempChanges[key] = nextVal;
                 
-                // 실시간 차트/티어 반영
                 let previewData = {...userData, ...tempChanges};
                 updateChart(previewData);
                 updateTier(previewData);
-                applyViewFilter(); // 필터 재적용
+                applyViewFilter();
             };
             gridBox.appendChild(div);
         });
         applyViewFilter();
     }
 
-    // ★ 보기 필터 적용
     function applyViewFilter() {
         const checkboxes = document.querySelectorAll('.filter-options input');
         const checkedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
-        
         const items = document.querySelectorAll('.grid-item');
         items.forEach(item => {
             const val = parseInt(item.dataset.val);
@@ -270,21 +258,17 @@
         });
     }
 
-    // ★ 티어 계산
     function updateTier(userData) {
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         let total = keys.length;
         let done = 0;
-        
         keys.forEach(k => {
             let val = parseInt(userData[k]) || 0;
-            if (val === 1 || val === 3) done++; // 맞음(1) or 고침(3) 인정
+            if (val === 1 || val === 3) done++; 
         });
-
         let percent = total === 0 ? 0 : (done / total) * 100;
         let badge = document.getElementById('tier-badge');
-        let tierName = "";
-        let tierClass = "";
+        let tierName = "", tierClass = "";
 
         if (percent === 100) { tierName = "CHALLENGER"; tierClass = "tier-challenger"; }
         else if (percent >= 90) { tierName = "DIAMOND"; tierClass = "tier-diamond"; }
@@ -372,75 +356,53 @@
         }
     }
 
-function saveData() {
-  const statusDiv = document.getElementById('save-status');
-  const keysToSave = Object.keys(tempChanges);
+    // ★★★ [수정됨] 배치 저장 및 텔레그램 연동 함수 ★★★
+    function saveData() {
+        const statusDiv = document.getElementById('save-status');
+        const keysToSave = Object.keys(tempChanges);
 
-  if (keysToSave.length === 0) {
-    statusDiv.innerText = "변경사항 없음";
-    statusDiv.style.color = "gray";
-    return;
-  }
+        if (keysToSave.length === 0) {
+            statusDiv.innerText = "변경사항 없음";
+            statusDiv.style.color = "gray";
+            return;
+        }
 
-  statusDiv.innerText = "저장 및 알림 전송 중...";
-  statusDiv.style.color = "orange";
+        statusDiv.innerText = "저장 및 알림 전송 중...";
+        statusDiv.style.color = "orange";
 
-  // 알림에 보낼 티어 정보
-  const badge = document.getElementById('tier-badge').innerText;
+        const badge = document.getElementById('tier-badge').innerText;
 
-  // ✅ POST 1번으로 "배치 저장" 요청
-  fetch(GOOGLE_SCRIPT_URL, {
-    method: 'POST',
-    // ⚠️ Apps Script CORS/프리플라이트 회피를 위해 JSON 헤더를 굳이 안 붙입니다.
-    // (body는 문자열이라 e.postData.contents로 정상 수신됨)
-    body: JSON.stringify({
-      action: "saveBatch",
-      sheetName: currentSheetName,
-      rowIndex: currentUserRowIndex,
-      changes: tempChanges,            // { "1": 2, "2": 1, ... } 형태
-      studentName: userCredentials.name,
-      tierInfo: badge
-    })
-  })
-  .then(async (res) => {
-    const text = await res.text();
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch (e) {
-      throw new Error("서버 응답이 JSON이 아닙니다: " + text);
+        // 배치 저장 요청 보내기 (action: saveBatch)
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "saveBatch",
+                sheetName: currentSheetName,
+                rowIndex: currentUserRowIndex,
+                changes: tempChanges, // 변경된 데이터 묶음
+                studentName: userCredentials.name,
+                tierInfo: badge
+            })
+        })
+        .then(res => res.json())
+        .then(json => {
+            if (json.status !== "success") {
+                throw new Error(json.message || "저장 실패");
+            }
+            
+            statusDiv.innerText = "✅ 저장 & 알림 완료!";
+            statusDiv.style.color = "green";
+            tempChanges = {};
+            setTimeout(() => { statusDiv.innerText = ""; }, 2000);
+            loadGame(currentSheetName);
+        })
+        .catch(err => {
+            console.error(err);
+            statusDiv.innerText = "❌ 저장 실패!";
+            statusDiv.style.color = "red";
+            alert("오류가 발생했습니다.\n내용: " + err.message + "\n\n(Apps Script를 '새 버전'으로 배포했는지 꼭 확인하세요!)");
+        });
     }
-    return json;
-  })
-  .then(json => {
-    if (json.status !== "success") {
-      throw new Error(json.message || "저장 실패");
-    }
-
-    // 저장은 성공했는데 텔레그램이 실패한 경우
-    if (json.telegram && json.telegram.status === "error") {
-      statusDiv.innerText = "✅ 저장 완료 (⚠️ 알림 실패)";
-      statusDiv.style.color = "orange";
-      console.warn("Telegram failed:", json.telegram.message);
-      alert("저장은 완료됐지만 텔레그램 알림 전송이 실패했습니다.\n(서버 로그를 확인하세요)");
-    } else {
-      statusDiv.innerText = "✅ 저장 & 알림 완료!";
-      statusDiv.style.color = "green";
-    }
-
-    // 변경사항 초기화 + 화면 갱신
-    tempChanges = {};
-    setTimeout(() => { statusDiv.innerText = ""; }, 2000);
-    loadGame(currentSheetName);
-  })
-  .catch(err => {
-    statusDiv.innerText = "❌ 저장 실패!";
-    statusDiv.style.color = "red";
-    console.error(err);
-    alert("저장/전송 실패: " + (err.message || err));
-  });
-}
-
 
     function showScreen(id) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
