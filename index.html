@@ -49,10 +49,12 @@
         button.primary { background-color: var(--toss-blue); color: white; }
         button.analyze { background-color: #E8F3FF; color: var(--toss-blue); }
 
+        /* [수정 1] box-sizing 추가하여 너비 문제 해결 */
         input, select {
             width: 100%; padding: 16px; margin-bottom: 12px; border: none;
             background-color: #F9FAFB; border-radius: var(--radius-M);
             font-size: 17px; font-family: inherit;
+            box-sizing: border-box; /* 패딩 포함 너비 계산 */
         }
         input:focus, select:focus { outline: 2px solid var(--toss-blue); background: white; }
 
@@ -65,8 +67,12 @@
             margin-bottom: 20px; padding: 16px; border-radius: var(--radius-L);
             font-weight: 700; color: white; font-size: 18px;
             box-shadow: var(--card-shadow);
+            flex-direction: column; /* 순위 표시를 위해 세로 정렬 */
+            gap: 5px;
         }
+        .tier-row { display: flex; align-items: center; }
         .tier-icon { font-size: 28px; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .rank-text { font-size: 14px; opacity: 0.9; font-weight: 500; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 10px; margin-top: 5px; }
 
         .tier-iron { background: linear-gradient(135deg, #585858, #3a3a3a); }
         .tier-bronze { background: linear-gradient(135deg, #cd7f32, #a05a2c); }
@@ -97,7 +103,6 @@
         .status-0 { background-color: white; color: var(--toss-text-gray); }
         .status-1 { background-color: #E3FCEF; color: #00A86B; box-shadow: inset 0 0 0 2px #00A86B; }
         .status-2 { background-color: #FFEBEB; color: #E31A1A; box-shadow: inset 0 0 0 2px #E31A1A; }
-        /* 빗금용 클래스 추가 */
         .status-3 { 
             background-color: #f0fff4; 
             color: #218c74; 
@@ -108,17 +113,17 @@
         .q-num { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
         .q-icon { font-size: 24px; }
         
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--toss-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        /* 로딩 스피너 (중앙 정렬 강화) */
+        .loader-wrapper { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; border-radius: var(--radius-L); }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--toss-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .chart-container { width: 65%; margin: 0 auto 20px auto; position: relative; }
         
-        /* 모달 공통 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-M); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); text-align: left;}
         
-        /* 나가기 모달 버튼들 */
         .modal-btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
         .btn-yes { background-color: var(--toss-blue); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 600; }
         .btn-no { background-color: #FFEBEB; color: #E31A1A; padding: 14px; border: none; border-radius: 12px; font-weight: 600; }
@@ -128,8 +133,9 @@
 <body>
 
 <div class="container">
+    <div id="global-loader" class="loader-wrapper"><div class="loader"></div></div>
+
     <h2>📚 수학 진도표</h2>
-    <div id="loader" class="loader"></div>
 
     <div id="screen-login" class="screen active">
         <p style="text-align:center; color:var(--toss-text-gray);">이름과 비밀번호를 입력하세요</p>
@@ -153,7 +159,8 @@
         <h3 id="game-title" style="text-align:center; margin:0 0 20px 0;"></h3>
         
         <div id="tier-badge" class="tier-badge tier-iron">
-            <span class="tier-icon">🛡️</span> <span>IRON (0%)</span>
+            <div class="tier-row"><span class="tier-icon">🛡️</span> <span>IRON (0%)</span></div>
+            <div class="rank-text" id="rank-display">순위 계산중...</div>
         </div>
 
         <div class="chart-container">
@@ -224,6 +231,39 @@
         osc.stop(audioCtx.currentTime + 0.1);
     }
 
+    // 로딩 토글 함수
+    function toggleLoader(show) {
+        document.getElementById('global-loader').style.display = show ? 'flex' : 'none';
+    }
+
+    window.addEventListener('popstate', function(event) {
+        if (document.getElementById('screen-game').classList.contains('active')) {
+            checkBackNavigation(); 
+        }
+    });
+
+    function checkBackNavigation() {
+        if (Object.keys(tempChanges).length > 0) {
+            history.pushState({page: 'game'}, document.title, "#game"); 
+            document.getElementById('exit-modal').style.display = 'flex';
+        } else {
+            exitWithoutSave();
+        }
+    }
+
+    function saveAndExit() {
+        document.getElementById('exit-modal').style.display = 'none';
+        saveData(true); 
+    }
+
+    function exitWithoutSave() {
+        document.getElementById('exit-modal').style.display = 'none';
+        tempChanges = {}; 
+        currentSheetName = "";
+        showScreen('screen-chapter');
+        history.replaceState(null, null, ' ');
+    }
+
     let userCredentials = { name: "", pw: "" };
     let currentSheetName = "";
     let currentUserRowIndex = -1;
@@ -236,62 +276,26 @@
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
     const TIER_ICONS = { "CHALLENGER": "👑", "DIAMOND": "💎", "PLATINUM": "💠", "GOLD": "🥇", "SILVER": "🥈", "BRONZE": "🥉", "IRON": "🛡️" };
 
-    // ============================================
-    // 🔙 뒤로가기 방어 로직 (History API)
-    // ============================================
-    window.addEventListener('popstate', function(event) {
-        // 게임 화면에서 뒤로가기를 눌렀을 때
-        if (document.getElementById('screen-game').classList.contains('active')) {
-            checkBackNavigation(); // 모달 띄우기 시도
-        }
-    });
-
-    function checkBackNavigation() {
-        // 변경사항이 있으면 모달 띄움
-        if (Object.keys(tempChanges).length > 0) {
-            // 브라우저 뒤로가기를 막기 위해 다시 pushState
-            history.pushState({page: 'game'}, document.title, "#game"); 
-            document.getElementById('exit-modal').style.display = 'flex';
-        } else {
-            exitWithoutSave(); // 변경사항 없으면 쿨하게 나감
-        }
-    }
-
-    function saveAndExit() {
-        document.getElementById('exit-modal').style.display = 'none';
-        saveData(true); // 저장 후 나가기 모드
-    }
-
-    function exitWithoutSave() {
-        document.getElementById('exit-modal').style.display = 'none';
-        tempChanges = {}; // 변경사항 폐기
-        currentSheetName = "";
-        showScreen('screen-chapter');
-        // URL 정리
-        history.replaceState(null, null, ' ');
-    }
-
-    // ============================================
-
     function goToChapterSelect() {
         const name = document.getElementById('input-name').value.trim();
         const pw = document.getElementById('input-pw').value.trim();
         if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; }
         userCredentials.name = name;
         userCredentials.pw = pw;
-        document.getElementById('loader').style.display = 'block';
+        
+        toggleLoader(true); // 로딩 시작
 
         fetch(GOOGLE_SCRIPT_URL + "?action=getChapters")
         .then(res => res.json())
         .then(chapters => {
-            document.getElementById('loader').style.display = 'none';
+            toggleLoader(false); // 로딩 끝
             allChapters = chapters; 
             showScreen('screen-chapter');
             setupClassFilter(chapters);
             filterChapters(); 
         })
         .catch(err => {
-            document.getElementById('loader').style.display = 'none';
+            toggleLoader(false);
             alert("목록 로딩 실패.");
         });
     }
@@ -332,17 +336,16 @@
 
     function loadGame(sheetName) {
         currentSheetName = sheetName;
-        // 게임 화면 진입 시 History 스택 쌓기
         history.pushState({page: 'game'}, document.title, "#game");
 
-        document.getElementById('loader').style.display = 'block';
+        toggleLoader(true);
         const timestamp = new Date().getTime(); 
         const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp;
 
         fetch(requestUrl)
         .then(res => res.json())
         .then(data => {
-            document.getElementById('loader').style.display = 'none';
+            toggleLoader(false);
             currentClassData = data;
             const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
             
@@ -359,7 +362,7 @@
             }
         })
         .catch(err => {
-            document.getElementById('loader').style.display = 'none';
+            toggleLoader(false);
             alert("로딩 중 오류 발생!");
         });
     }
@@ -411,6 +414,43 @@
         });
     }
 
+    // ★★★ [수정 3] 순위 계산 로직 추가 ★★★
+    function getRank(myData, allData) {
+        // 문제 키 목록
+        const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
+        if (keys.length === 0) return "-";
+
+        // 각 학생별 점수(완료 개수) 계산
+        let scores = allData.map(student => {
+            let score = 0;
+            keys.forEach(k => {
+                let val = parseInt(student[k]) || 0;
+                if (val === 1 || val === 3) score++;
+            });
+            return { name: student['이름'], score: score };
+        });
+
+        // 내 점수 (임시 변경사항 포함해서 계산해야 실시간 반영됨)
+        let myScore = 0;
+        keys.forEach(k => {
+            let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
+            if (val === 1 || val === 3) myScore++;
+        });
+
+        // 내 점수로 리스트 갱신 (다른 학생들은 DB기준, 나는 현재화면 기준)
+        let myEntryIndex = scores.findIndex(s => s.name === myData['이름']);
+        if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore;
+
+        // 점수 내림차순 정렬
+        scores.sort((a, b) => b.score - a.score);
+
+        // 내 순위 찾기
+        let rank = scores.findIndex(s => s.name === myData['이름']) + 1;
+        let totalStudents = scores.length;
+
+        return `${rank}위 / ${totalStudents}명`;
+    }
+
     function updateTier(userData) {
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         let total = keys.length;
@@ -431,55 +471,47 @@
         else if (percent >= 10) { tierName = "BRONZE"; tierClass = "tier-bronze"; tierIcon = "🥉"; }
         else { tierName = "IRON"; tierClass = "tier-iron"; tierIcon = "🛡️"; }
 
+        // 순위 가져오기
+        let rankText = getRank(userData, currentClassData);
+
         badge.className = `tier-badge ${tierClass}`;
-        badge.innerHTML = `<span class="tier-icon">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span>`;
+        badge.innerHTML = `
+            <div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span></div>
+            <div class="rank-text">현재 순위 : ${rankText}</div>
+        `;
     }
 
-    // 🎨 빗금 패턴 (초록색)
     function getPattern() {
         const patternCanvas = document.createElement('canvas');
         const pCtx = patternCanvas.getContext('2d');
         patternCanvas.width = 10;
         patternCanvas.height = 10;
-        
-        // 배경색 (연한 초록)
         pCtx.fillStyle = '#E8F5E9'; 
         pCtx.fillRect(0,0,10,10);
-
-        // 빗금 (진한 초록)
         pCtx.strokeStyle = '#218c74'; 
         pCtx.lineWidth = 2;
         pCtx.beginPath();
         pCtx.moveTo(0, 10);
         pCtx.lineTo(10, 0);
         pCtx.stroke();
-
         return pCtx.createPattern(patternCanvas, 'repeat');
     }
 
-    // 🏆 중앙 텍스트 플러그인 (현재 점수 표시)
     const centerTextPlugin = {
         id: 'centerText',
         beforeDraw: function(chart) {
             if (chart.config.type !== 'doughnut') return;
             var width = chart.width, height = chart.height, ctx = chart.ctx;
             ctx.restore();
-            
-            // 점수 계산 (맞음+고침)
-            let data = chart.data.datasets[0].data; // [안품, 맞음, 틀림, 고침]
+            let data = chart.data.datasets[0].data;
             let total = data.reduce((a, b) => a + b, 0);
-            let score = data[1] + data[3]; // 맞음 + 고침
+            let score = data[1] + data[3];
             let percent = total === 0 ? 0 : Math.round((score / total) * 100);
-
             var fontSize = (height / 114).toFixed(2);
             ctx.font = "bold " + fontSize + "em Pretendard";
             ctx.textBaseline = "middle";
             ctx.fillStyle = "#191F28";
-
-            var text = percent + "%",
-                textX = Math.round((width - ctx.measureText(text).width) / 2),
-                textY = height / 2;
-
+            var text = percent + "%", textX = Math.round((width - ctx.measureText(text).width) / 2), textY = height / 2;
             ctx.fillText(text, textX, textY);
             ctx.save();
         }
@@ -496,8 +528,6 @@
         });
 
         if (myChart) myChart.destroy();
-        
-        // 🎨 [수정] 4번째(고침)에 빗금 패턴 적용
         const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern()];
 
         myChart = new Chart(ctx, {
@@ -509,16 +539,11 @@
                     backgroundColor: bgColors,
                     borderWidth: 2,
                     borderColor: 'white',
-                    borderRadius: 20, // 둥근 모서리
+                    borderRadius: 20,
                     hoverOffset: 4
                 }]
             },
-            options: { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                cutout: '70%', // 가운데 구멍 크기
-                plugins: { legend: { display: false } } 
-            }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
         });
     }
 
@@ -528,7 +553,6 @@
         let myStatus = {...myData, ...tempChanges}; 
         let questionStats = {};
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
-        
         keys.forEach(key => {
             let correctCount = 0;
             let totalStudents = 0;
@@ -572,7 +596,6 @@
         }
     }
 
-    // exitMode = true면 저장 후 나가기
     function saveData(exitMode = false) {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
@@ -580,13 +603,14 @@
         if (keysToSave.length === 0) {
             statusDiv.innerText = "변경사항이 없습니다";
             statusDiv.style.color = "var(--toss-text-gray)";
-            if(exitMode) exitWithoutSave(); // 변경 없으면 그냥 나감
+            if(exitMode) exitWithoutSave();
             return;
         }
 
+        // [수정 2] 저장 시에도 로딩 스피너 띄움
+        toggleLoader(true); 
         statusDiv.innerText = "저장 및 제출 중...";
-        statusDiv.style.color = "var(--toss-blue)";
-
+        
         const badge = document.getElementById('tier-badge').innerText;
 
         fetch(GOOGLE_SCRIPT_URL, {
@@ -602,6 +626,7 @@
         })
         .then(res => res.json())
         .then(json => {
+            toggleLoader(false); // 로딩 끝
             if (json.status !== "success") {
                 throw new Error(json.message || "저장 실패");
             }
@@ -612,12 +637,13 @@
             setTimeout(() => { statusDiv.innerText = ""; }, 3000);
             
             if (exitMode) {
-                exitWithoutSave(); // 저장 성공했으니 목록으로
+                exitWithoutSave();
             } else {
                 loadGame(currentSheetName);
             }
         })
         .catch(err => {
+            toggleLoader(false);
             console.error(err);
             statusDiv.innerText = "❌ 저장 실패";
             statusDiv.style.color = "#E31A1A";
