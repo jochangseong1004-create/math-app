@@ -15,7 +15,6 @@
             --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             --radius-L: 24px;
             --radius-M: 16px;
-            --radius-S: 12px;
         }
 
         body {
@@ -24,7 +23,7 @@
             margin: 0;
             padding: 20px;
             color: var(--toss-text-dark);
-            -webkit-tap-highlight-color: transparent; /* 모바일 터치 하이라이트 제거 */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .container {
@@ -34,13 +33,14 @@
             padding: 30px 24px;
             border-radius: var(--radius-L);
             box-shadow: var(--card-shadow);
-            min-height: 80vh;
+            min-height: 85vh;
+            position: relative;
         }
 
-        h2, h3 { text-align: center; color: var(--toss-text-dark); margin-bottom: 24px; font-weight: 700; }
+        h2, h3 { text-align: center; color: var(--toss-text-dark); margin-bottom: 20px; font-weight: 700; }
         
         button { font-family: inherit; transition: all 0.1s ease; cursor: pointer; }
-        button:active { transform: scale(0.95); }
+        button:active { transform: scale(0.96); }
 
         button.primary, button.analyze {
             width: 100%; padding: 16px; border: none; border-radius: var(--radius-M);
@@ -62,11 +62,11 @@
         /* 티어 배지 */
         .tier-badge {
             display: flex; align-items: center; justify-content: center;
-            margin-bottom: 20px; padding: 20px; border-radius: var(--radius-L);
+            margin-bottom: 20px; padding: 16px; border-radius: var(--radius-L);
             font-weight: 700; color: white; font-size: 18px;
             box-shadow: var(--card-shadow);
         }
-        .tier-icon { font-size: 32px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .tier-icon { font-size: 28px; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
         .tier-iron { background: linear-gradient(135deg, #585858, #3a3a3a); }
         .tier-bronze { background: linear-gradient(135deg, #cd7f32, #a05a2c); }
@@ -97,7 +97,13 @@
         .status-0 { background-color: white; color: var(--toss-text-gray); }
         .status-1 { background-color: #E3FCEF; color: #00A86B; box-shadow: inset 0 0 0 2px #00A86B; }
         .status-2 { background-color: #FFEBEB; color: #E31A1A; box-shadow: inset 0 0 0 2px #E31A1A; }
-        .status-3 { background-color: #E8F3FF; color: var(--toss-blue); box-shadow: inset 0 0 0 2px var(--toss-blue); }
+        /* 빗금용 클래스 추가 */
+        .status-3 { 
+            background-color: #f0fff4; 
+            color: #218c74; 
+            box-shadow: inset 0 0 0 2px #218c74;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(33, 140, 116, 0.1) 5px, rgba(33, 140, 116, 0.1) 10px);
+        }
 
         .q-num { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
         .q-icon { font-size: 24px; }
@@ -105,11 +111,18 @@
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--toss-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .chart-container { width: 60%; margin: 0 auto 20px auto; }
+        .chart-container { width: 65%; margin: 0 auto 20px auto; position: relative; }
         
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 400px; text-align: left; }
-        .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-S); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); }
+        /* 모달 공통 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
+        .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-M); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); text-align: left;}
+        
+        /* 나가기 모달 버튼들 */
+        .modal-btn-group { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+        .btn-yes { background-color: var(--toss-blue); color: white; padding: 14px; border: none; border-radius: 12px; font-weight: 600; }
+        .btn-no { background-color: #FFEBEB; color: #E31A1A; padding: 14px; border: none; border-radius: 12px; font-weight: 600; }
+        .btn-cancel { background-color: white; color: var(--toss-text-gray); padding: 14px; border: 1px solid #ddd; border-radius: 12px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -143,7 +156,9 @@
             <span class="tier-icon">🛡️</span> <span>IRON (0%)</span>
         </div>
 
-        <div class="chart-container"><canvas id="progressChart"></canvas></div>
+        <div class="chart-container">
+            <canvas id="progressChart"></canvas>
+        </div>
 
         <div class="filter-options">
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0" hidden>⚪ 안품</label>
@@ -160,12 +175,12 @@
                 <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
                 <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
             </div>
-            <button onclick="window.history.back()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 다른 단원 보기</button>
+            <button onclick="checkBackNavigation()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 목록으로</button>
         </div>
     </div>
 </div>
 
-<div id="analysis-modal" class="modal-overlay" onclick="closeModal(event)">
+<div id="analysis-modal" class="modal-overlay" onclick="closeModal(event, 'analysis-modal')">
     <div class="modal-content">
         <h3 style="margin-top:0;">📊 학습 분석 리포트</h3>
         <div id="analysis-content"></div>
@@ -173,40 +188,41 @@
     </div>
 </div>
 
+<div id="exit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="margin-bottom:10px;">잠깐만요! 🛑</h3>
+        <p style="color:var(--toss-text-gray); margin-bottom:20px;">
+            저장하지 않은 변경사항이 있습니다.<br>
+            저장하고 목록으로 나갈까요?
+        </p>
+        <div class="modal-btn-group">
+            <button class="btn-yes" onclick="saveAndExit()">네, 저장하고 나갈래요</button>
+            <button class="btn-no" onclick="exitWithoutSave()">아니요, 그냥 나갈래요</button>
+            <button class="btn-cancel" onclick="document.getElementById('exit-modal').style.display='none'">취소 (계속 풀기)</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // ★★★ 선생님 URL로 교체 필수 ★★★
+    // ★★★ 선생님 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
-    // 🔊 효과음 (뽁!) Base64 인코딩
-    const popSound = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"); 
-    // (용량 문제로 아주 짧은 틱 소리로 대체하거나, 선생님이 원하는 mp3 url을 넣으셔도 됩니다. 
-    // 여기서는 가장 가벼운 방식으로 구현하기 위해 클릭음 코드를 넣습니다.)
-    // 실제 '뽁' 소리 (Pop) 데이터로 교체
+    // 뾱! 소리
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playPopSound() {
+        if(audioCtx.state === 'suspended') audioCtx.resume();
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(800, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start();
         osc.stop(audioCtx.currentTime + 0.1);
     }
-
-    // 🔙 뒤로가기 제어 (History API)
-    window.addEventListener('popstate', function(event) {
-        // 뒤로가기 누르면 무조건 단원 선택 화면으로
-        if (currentSheetName) {
-            showScreen('screen-chapter');
-            currentSheetName = ""; // 초기화
-        } else {
-            // 로그인 화면 등에서는 기본 동작
-        }
-    });
 
     let userCredentials = { name: "", pw: "" };
     let currentSheetName = "";
@@ -219,6 +235,43 @@
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
     const TIER_ICONS = { "CHALLENGER": "👑", "DIAMOND": "💎", "PLATINUM": "💠", "GOLD": "🥇", "SILVER": "🥈", "BRONZE": "🥉", "IRON": "🛡️" };
+
+    // ============================================
+    // 🔙 뒤로가기 방어 로직 (History API)
+    // ============================================
+    window.addEventListener('popstate', function(event) {
+        // 게임 화면에서 뒤로가기를 눌렀을 때
+        if (document.getElementById('screen-game').classList.contains('active')) {
+            checkBackNavigation(); // 모달 띄우기 시도
+        }
+    });
+
+    function checkBackNavigation() {
+        // 변경사항이 있으면 모달 띄움
+        if (Object.keys(tempChanges).length > 0) {
+            // 브라우저 뒤로가기를 막기 위해 다시 pushState
+            history.pushState({page: 'game'}, document.title, "#game"); 
+            document.getElementById('exit-modal').style.display = 'flex';
+        } else {
+            exitWithoutSave(); // 변경사항 없으면 쿨하게 나감
+        }
+    }
+
+    function saveAndExit() {
+        document.getElementById('exit-modal').style.display = 'none';
+        saveData(true); // 저장 후 나가기 모드
+    }
+
+    function exitWithoutSave() {
+        document.getElementById('exit-modal').style.display = 'none';
+        tempChanges = {}; // 변경사항 폐기
+        currentSheetName = "";
+        showScreen('screen-chapter');
+        // URL 정리
+        history.replaceState(null, null, ' ');
+    }
+
+    // ============================================
 
     function goToChapterSelect() {
         const name = document.getElementById('input-name').value.trim();
@@ -279,7 +332,7 @@
 
     function loadGame(sheetName) {
         currentSheetName = sheetName;
-        // ★ 뒤로가기 제어를 위해 히스토리 추가
+        // 게임 화면 진입 시 History 스택 쌓기
         history.pushState({page: 'game'}, document.title, "#game");
 
         document.getElementById('loader').style.display = 'block';
@@ -302,7 +355,7 @@
                 updateTier(user);
             } else {
                 alert("학생 정보를 찾을 수 없습니다.");
-                history.back(); // 정보 없으면 다시 뒤로
+                history.back(); 
             }
         })
         .catch(err => {
@@ -325,7 +378,7 @@
             div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`;
 
             div.onclick = function() {
-                playPopSound(); // 🔊 뾱! 소리 재생
+                playPopSound(); 
                 
                 let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val;
                 let nextVal = (current + 1) % 4;
@@ -382,19 +435,19 @@
         badge.innerHTML = `<span class="tier-icon">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span>`;
     }
 
-    // 🎨 빗금 패턴 생성 함수
-    function getPattern(color) {
+    // 🎨 빗금 패턴 (초록색)
+    function getPattern() {
         const patternCanvas = document.createElement('canvas');
         const pCtx = patternCanvas.getContext('2d');
         patternCanvas.width = 10;
         patternCanvas.height = 10;
         
-        // 배경색
-        pCtx.fillStyle = color; // 원래 색상
+        // 배경색 (연한 초록)
+        pCtx.fillStyle = '#E8F5E9'; 
         pCtx.fillRect(0,0,10,10);
 
-        // 빗금
-        pCtx.strokeStyle = 'rgba(255,255,255,0.4)'; // 흰색 반투명 빗금
+        // 빗금 (진한 초록)
+        pCtx.strokeStyle = '#218c74'; 
         pCtx.lineWidth = 2;
         pCtx.beginPath();
         pCtx.moveTo(0, 10);
@@ -403,6 +456,35 @@
 
         return pCtx.createPattern(patternCanvas, 'repeat');
     }
+
+    // 🏆 중앙 텍스트 플러그인 (현재 점수 표시)
+    const centerTextPlugin = {
+        id: 'centerText',
+        beforeDraw: function(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            var width = chart.width, height = chart.height, ctx = chart.ctx;
+            ctx.restore();
+            
+            // 점수 계산 (맞음+고침)
+            let data = chart.data.datasets[0].data; // [안품, 맞음, 틀림, 고침]
+            let total = data.reduce((a, b) => a + b, 0);
+            let score = data[1] + data[3]; // 맞음 + 고침
+            let percent = total === 0 ? 0 : Math.round((score / total) * 100);
+
+            var fontSize = (height / 114).toFixed(2);
+            ctx.font = "bold " + fontSize + "em Pretendard";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "#191F28";
+
+            var text = percent + "%",
+                textX = Math.round((width - ctx.measureText(text).width) / 2),
+                textY = height / 2;
+
+            ctx.fillText(text, textX, textY);
+            ctx.save();
+        }
+    };
+    Chart.register(centerTextPlugin);
 
     function updateChart(userData) {
         const ctx = document.getElementById('progressChart').getContext('2d');
@@ -415,8 +497,8 @@
 
         if (myChart) myChart.destroy();
         
-        // 🎨 고침(3)에만 빗금 패턴 적용
-        const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern('#0064FF')];
+        // 🎨 [수정] 4번째(고침)에 빗금 패턴 적용
+        const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern()];
 
         myChart = new Chart(ctx, {
             type: 'doughnut',
@@ -425,13 +507,16 @@
                 datasets: [{
                     data: counts,
                     backgroundColor: bgColors,
-                    borderWidth: 0
+                    borderWidth: 2,
+                    borderColor: 'white',
+                    borderRadius: 20, // 둥근 모서리
+                    hoverOffset: 4
                 }]
             },
             options: { 
                 responsive: true, 
                 maintainAspectRatio: false, 
-                cutout: '65%', 
+                cutout: '70%', // 가운데 구멍 크기
                 plugins: { legend: { display: false } } 
             }
         });
@@ -481,19 +566,21 @@
         document.getElementById('analysis-modal').style.display = 'flex';
     }
 
-    function closeModal(e) {
-        if (e.target === document.getElementById('analysis-modal')) {
-            document.getElementById('analysis-modal').style.display = 'none';
+    function closeModal(e, id) {
+        if (e.target === document.getElementById(id)) {
+            document.getElementById(id).style.display = 'none';
         }
     }
 
-    function saveData() {
+    // exitMode = true면 저장 후 나가기
+    function saveData(exitMode = false) {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
 
         if (keysToSave.length === 0) {
             statusDiv.innerText = "변경사항이 없습니다";
             statusDiv.style.color = "var(--toss-text-gray)";
+            if(exitMode) exitWithoutSave(); // 변경 없으면 그냥 나감
             return;
         }
 
@@ -519,11 +606,16 @@
                 throw new Error(json.message || "저장 실패");
             }
             
-            statusDiv.innerText = "✅ 제출이 완료되었습니다!";
+            statusDiv.innerText = "✅ 제출 완료!";
             statusDiv.style.color = "#00A86B";
             tempChanges = {};
             setTimeout(() => { statusDiv.innerText = ""; }, 3000);
-            loadGame(currentSheetName);
+            
+            if (exitMode) {
+                exitWithoutSave(); // 저장 성공했으니 목록으로
+            } else {
+                loadGame(currentSheetName);
+            }
         })
         .catch(err => {
             console.error(err);
@@ -538,13 +630,6 @@
         document.getElementById(id).classList.add('active');
     }
 
-    function goBackToChapter() { 
-        if (confirm("저장하지 않은 내용은 사라집니다. 목록으로 갈까요?")) {
-            showScreen('screen-chapter');
-            history.pushState(null, null, ' '); // URL 깨끗하게
-        }
-    }
-    
     function logout() { userCredentials = {}; location.reload(); }
 </script>
 
