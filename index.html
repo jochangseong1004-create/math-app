@@ -116,7 +116,7 @@
 </div>
 
 <script>
-    // ★★★ 선생님의 배포 ID 주소로 변경하세요! ★★★
+    // ★★★ 선생님이 쓰시던 URL 그대로 사용합니다 ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     let userCredentials = { name: "", pw: "" };
@@ -126,7 +126,7 @@
     let allChapters = []; 
     let myChart = null;
     let currentClassData = [];
-    let currentUserData = {}; // 현재 유저 데이터(임시 포함)
+    let currentUserData = {}; // 현재 유저 데이터
 
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
@@ -151,7 +151,7 @@
         })
         .catch(err => {
             document.getElementById('loader').style.display = 'none';
-            alert("목록 로딩 실패.");
+            alert("목록 로딩 실패. 새로고침 해주세요.");
         });
     }
 
@@ -270,7 +270,7 @@
         });
     }
 
-    // ★ 티어 계산 및 표시
+    // ★ 티어 계산
     function updateTier(userData) {
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         let total = keys.length;
@@ -380,7 +380,7 @@
         statusDiv.innerText = "저장 및 알림 전송 중...";
         statusDiv.style.color = "orange";
 
-        // ★ 알림에 보낼 정보 추가 (티어, 진행률)
+        // ★ 알림에 보낼 정보 (티어)
         let badge = document.getElementById('tier-badge').innerText;
         
         let promises = keysToSave.map(colName => {
@@ -391,10 +391,9 @@
                     rowIndex: currentUserRowIndex,
                     colName: colName,
                     value: tempChanges[colName],
-                    // ★ 알림용 추가 데이터
                     studentName: userCredentials.name,
                     tierInfo: badge,
-                    isLast: colName === keysToSave[keysToSave.length-1] // 마지막 요청일 때만 알림 보내기 위함
+                    isLast: colName === keysToSave[keysToSave.length-1] 
                 })
             })
             .then(res => res.json())
