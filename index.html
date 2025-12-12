@@ -4,68 +4,188 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>수학 진도표</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* =========================================
-           🎨 [색상 변경 구역] 여기서 티어 색을 바꾸세요!
+           🎨 [토스 스타일] 디자인 변수 정의
            ========================================= */
-        /* 각 줄의 #xxxxxx 코드를 원하는 색상 코드로 바꾸면 됩니다. */
-        /* 그라데이션이므로 색상 두 개를 고르세요 (왼쪽 색 -> 오른쪽 색) */
-        
-        .tier-iron { background: linear-gradient(45deg, #585858, #3a3a3a); }       /* 아이언 (진한 회색) */
-        .tier-bronze { background: linear-gradient(45deg, #cd7f32, #a05a2c); }     /* 브론즈 (동색) */
-        .tier-silver { background: linear-gradient(45deg, #c0c0c0, #909090); }     /* 실버 (은색) */
-        .tier-gold { background: linear-gradient(45deg, #ffd700, #daa520); }       /* 골드 (금색) */
-        .tier-platinum { background: linear-gradient(45deg, #00ced1, #008b8b); }   /* 플래티넘 (청록색) */
-        .tier-diamond { background: linear-gradient(45deg, #b9f2ff, #00bfff); color: #005f99; text-shadow: none; } /* 다이아 (하늘색) */
-        /* 챌린저는 빛나는 효과가 추가되어 있습니다 */
-        .tier-challenger { background: linear-gradient(45deg, #ff4e50, #f9d423); border: 2px solid gold; box-shadow: 0 0 10px gold; }
+        :root {
+            --toss-blue: #0064FF;       /* 토스 시그니처 블루 */
+            --toss-bg: #F2F4F6;         /* 토스 배경 연회색 */
+            --toss-text-dark: #191F28;  /* 진한 글씨 */
+            --toss-text-gray: #8B95A1;  /* 연한 글씨 */
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* 부드러운 그림자 */
+            --radius-L: 24px;           /* 큰 둥글기 */
+            --radius-M: 16px;           /* 중간 둥글기 */
+            --radius-S: 12px;           /* 작은 둥글기 */
+        }
 
-        /* =========================================
-           여기서부터는 건드리지 않으셔도 됩니다.
-           ========================================= */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f4f5f7; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
+        body {
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, "Helvetica Neue", "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+            background-color: var(--toss-bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--toss-text-dark);
+            line-height: 1.5;
+        }
+
+        /* 메인 컨테이너: 흰색 카드 형태 */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px 24px; /* 패딩을 좀 더 넉넉하게 */
+            border-radius: var(--radius-L);
+            box-shadow: var(--card-shadow);
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: var(--toss-text-dark);
+            font-weight: 700;
+            margin-bottom: 24px;
+            letter-spacing: -0.5px;
+        }
+        h2 { font-size: 24px; }
+        h3 { font-size: 20px; }
         
-        button.primary { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        button.primary:active { background-color: #0056b3; }
-        button.analyze { width: 100%; padding: 12px; background-color: #6f42c1; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        /* 버튼 스타일: 토스 블루 적용, 누르는 효과 추가 */
+        button {
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+        button:active { transform: scale(0.96); /* 누르면 살짝 작아짐 */ }
+
+        button.primary, button.analyze {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: var(--radius-M);
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+        button.primary {
+            background-color: var(--toss-blue);
+            color: white;
+        }
+        button.primary:hover { background-color: #0050CC; } /* 호버 효과 */
         
-        input, select { width: 90%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; display: block; margin-left: auto; margin-right: auto;}
+        button.analyze {
+            background-color: #E8F3FF; /* 아주 연한 블루 */
+            color: var(--toss-blue);
+        }
+
+        /* 입력창 스타일: 테두리 없애고 배경색으로 */
+        input, select {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 12px;
+            border: none; /* 테두리 제거 */
+            background-color: #F9FAFB; /* 아주 연한 회색 배경 */
+            border-radius: var(--radius-M);
+            font-size: 17px;
+            font-family: inherit;
+            box-sizing: border-box; /* 패딩 포함 크기 계산 */
+            transition: 0.2s;
+        }
+        input:focus, select:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--toss-blue); /* 포커스시 파란 테두리 */
+            background-color: white;
+        }
 
         .screen { display: none; flex-direction: column; gap: 10px; }
         .active { display: flex; }
 
-        /* 티어 배지 기본 스타일 (아이콘 배치를 위해 flex 적용) */
-        .tier-badge { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; padding: 12px; border-radius: 12px; font-weight: bold; color: white; text-shadow: 1px 1px 2px rgba(0,0,0,0.2); transition: 0.3s; font-size: 18px;}
-        .tier-icon { font-size: 28px; margin-right: 10px; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3)); }
+        /* 티어 배지: 카드 형태로 변경 */
+        .tier-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: var(--radius-L);
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+            box-shadow: var(--card-shadow); /* 그림자 추가 */
+            /* 배경색은 JS에서 그라데이션으로 덮어씌워집니다 */
+        }
+        .tier-icon { font-size: 32px; margin-right: 12px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
 
-        /* 필터 스타일 */
-        .filter-options { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .filter-label { font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px; user-select: none; }
-        
-        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .grid-item { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: white; border: 1px solid #e0e0e0; border-radius: 8px; cursor: pointer; }
-        .grid-item.hidden { display: none; } /* 필터링용 */
-        
-        .status-0 { background-color: white; border-color: #ddd; }
-        .status-1 { background-color: #d4edda; border-color: #c3e6cb; color: #155724; }
-        .status-2 { background-color: #f8d7da; border-color: #f5c6cb; color: #721c24; }
-        .status-3 { background-color: #d1ecf1; border-color: #bee5eb; color: #0c5460; }
+        /* 티어별 색상 (그라데이션 유지) */
+        .tier-iron { background: linear-gradient(135deg, #585858, #3a3a3a); }
+        .tier-bronze { background: linear-gradient(135deg, #cd7f32, #a05a2c); }
+        .tier-silver { background: linear-gradient(135deg, #c0c0c0, #909090); }
+        .tier-gold { background: linear-gradient(135deg, #ffd700, #daa520); }
+        .tier-platinum { background: linear-gradient(135deg, #00ced1, #008b8b); }
+        .tier-diamond { background: linear-gradient(135deg, #b9f2ff, #00bfff); color: #005f99; }
+        .tier-challenger { background: linear-gradient(135deg, #ff4e50, #f9d423); border: 3px solid gold; }
 
-        .q-num { font-size: 12px; color: #666; margin-bottom: 2px; }
-        .q-icon { font-size: 24px; line-height: 1; }
+        /* 필터: 알약 모양으로 변경 */
+        .filter-options { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .filter-label {
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+            padding: 8px 12px;
+            background: #F9FAFB;
+            border-radius: 20px; /* 알약 모양 */
+            font-weight: 500;
+            color: var(--toss-text-gray);
+            transition: 0.2s;
+        }
+        /* 체크박스가 선택되었을 때 라벨 스타일 변경 (야매 방식이지만 효과적) */
+        .filter-label:has(input:checked) {
+            background-color: #E8F3FF;
+            color: var(--toss-blue);
+            font-weight: 700;
+        }
         
-        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
+        /* =========================================
+           🧩 그리드 아이템 (문제 칸) 디자인 핵심
+           ========================================= */
+        .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+        .grid-item {
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            border-radius: var(--radius-M); /* 둥근 모서리 */
+            cursor: pointer;
+            border: none; /* 테두리 제거 */
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 아주 약한 기본 그림자 */
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); /* 부드러운 애니메이션 */
+        }
+        .grid-item:active { transform: scale(0.92); /* 누르는 맛! */ }
+        .grid-item.hidden { display: none; }
+        
+        /* 상태별 색상 - 파스텔톤 배경 + 선명한 아이콘 */
+        .status-0 { background-color: white; color: var(--toss-text-gray); } /* 안품 */
+        .status-1 { background-color: #E3FCEF; color: #00A86B; box-shadow: inset 0 0 0 2px #00A86B; } /* 맞음 (민트) */
+        .status-2 { background-color: #FFEBEB; color: #E31A1A; box-shadow: inset 0 0 0 2px #E31A1A; } /* 틀림 (소프트 레드) */
+        .status-3 { background-color: #E8F3FF; color: var(--toss-blue); box-shadow: inset 0 0 0 2px var(--toss-blue); } /* 고침 (소프트 블루) */
+
+        .q-num { font-size: 13px; font-weight: 600; margin-bottom: 4px; opacity: 0.8; }
+        .q-icon { font-size: 26px; line-height: 1; }
+        
+        /* 로딩, 차트, 팝업 스타일 정리 */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--toss-blue); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .chart-container { width: 50%; margin: 0 auto 10px auto; }
+        .chart-container { width: 60%; margin: 0 auto 20px auto; }
         
-        /* 분석 팝업 */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 400px; text-align: left; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .analysis-box { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #007bff; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 400px; text-align: left; box-shadow: var(--card-shadow); }
+        .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-S); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); color: var(--toss-text-dark); }
     </style>
 </head>
 <body>
@@ -75,25 +195,25 @@
     <div id="loader" class="loader"></div>
 
     <div id="screen-login" class="screen active">
-        <p style="text-align:center; color:gray;">이름과 비밀번호를 입력하세요</p>
-        <input type="text" id="input-name" placeholder="이름">
-        <input type="password" id="input-pw" placeholder="비밀번호">
-        <button class="primary" onclick="goToChapterSelect()">로그인</button>
+        <p style="text-align:center; color:var(--toss-text-gray); margin-bottom: 20px;">학생 이름을 입력해주세요</p>
+        <input type="text" id="input-name" placeholder="이름 (예: 홍길동)">
+        <input type="password" id="input-pw" placeholder="비밀번호 (전화번호 뒤 4자리)">
+        <button class="primary" onclick="goToChapterSelect()">내 진도표 보기</button>
     </div>
 
     <div id="screen-chapter" class="screen">
-        <p style="text-align:center;">수업을 선택하세요</p>
-        <div style="text-align:center; margin-bottom:15px;">
+        <h3>학습할 단원을 선택하세요</h3>
+        <div style="margin-bottom:15px;">
             <select id="class-filter" onchange="filterChapters()">
                 <option value="all">전체 수업 보기</option>
             </select>
         </div>
         <div id="chapter-list" style="display:flex; flex-direction:column; gap:10px;"></div>
-        <button onclick="logout()" style="background-color:#6c757d; color:white; border:none; padding:10px; border-radius:8px; margin-top:20px;">로그아웃</button>
+        <button onclick="logout()" style="background-color:#F2F4F6; color:var(--toss-text-gray); margin-top:20px;">로그아웃</button>
     </div>
 
     <div id="screen-game" class="screen">
-        <h3 id="game-title" style="text-align:center; margin:0 0 10px 0;"></h3>
+        <h3 id="game-title" style="text-align:center; margin:0 0 20px 0;"></h3>
         
         <div id="tier-badge" class="tier-badge tier-iron">
             <span class="tier-icon">🛡️</span> <span>IRON (0%)</span>
@@ -102,35 +222,39 @@
         <div class="chart-container"><canvas id="progressChart"></canvas></div>
 
         <div class="filter-options">
-            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0">⚪안품</label>
-            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="1">🟢맞음</label>
-            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="2">🔴틀림</label>
-            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="3">✅고침</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0" hidden>⚪ 안품</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="1" hidden>🟢 맞음</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="2" hidden>🔴 틀림</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="3" hidden>✅ 고침</label>
         </div>
         
         <div class="grid-container" id="grid-box"></div>
 
-        <div style="text-align:center; margin-top:10px;">
-            <div id="save-status" style="height:20px; font-size:14px;"></div>
-            <button class="analyze" onclick="analyzePerformance()">🤖 AI 분석 리포트</button>
-            <button class="primary" style="background-color: #28a745;" onclick="saveData()">💾 저장하기 (알림 전송)</button>
-            <button onclick="goBackToChapter()" style="background-color:#6c757d; color:white; border:none; padding:10px; border-radius:8px; margin-top:10px; width:100%;">🔙 목록으로</button>
+        <div style="text-align:center; margin-top:20px;">
+            <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom: 8px;"></div>
+            
+            <div style="display:flex; gap:10px;">
+                <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
+                <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
+            </div>
+            <button onclick="goBackToChapter()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%;">← 다른 단원 보기</button>
         </div>
     </div>
 </div>
 
 <div id="analysis-modal" class="modal-overlay" onclick="closeModal(event)">
     <div class="modal-content">
-        <h3 style="margin-top:0;">📊 학습 분석</h3>
+        <h3 style="margin-top:0;">📊 학습 분석 리포트</h3>
         <div id="analysis-content"></div>
-        <button onclick="document.getElementById('analysis-modal').style.display='none'" style="width:100%; padding:10px; background:#6c757d; color:white; border:none; border-radius:8px; margin-top:10px;">닫기</button>
+        <button onclick="document.getElementById('analysis-modal').style.display='none'" style="width:100%; padding:16px; background:#F2F4F6; color:var(--toss-text-dark); border:none; border-radius:var(--radius-M); margin-top:20px; font-weight:600;">닫기</button>
     </div>
 </div>
 
 <script>
-    // ★★★ 여기에 선생님의 배포 URL을 넣어주세요! ★★★
+    // ★★★ 선생님 URL 확인 필요 ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
+    // ... (이하 자바스크립트 코드는 기존과 동일하므로 생략 없이 전체 포함) ...
     let userCredentials = { name: "", pw: "" };
     let currentSheetName = "";
     let currentUserRowIndex = -1;
@@ -142,15 +266,9 @@
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; 
     const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
 
-    // [추가됨] 티어별 아이콘 정의
     const TIER_ICONS = {
-        "CHALLENGER": "👑", // 왕관
-        "DIAMOND": "💎",    // 보석
-        "PLATINUM": "💠",   // 다이아몬드 모양
-        "GOLD": "🥇",       // 금메달
-        "SILVER": "🥈",     // 은메달
-        "BRONZE": "🥉",     // 동메달
-        "IRON": "🛡️"        // 방패
+        "CHALLENGER": "👑", "DIAMOND": "💎", "PLATINUM": "💠",
+        "GOLD": "🥇", "SILVER": "🥈", "BRONZE": "🥉", "IRON": "🛡️"
     };
 
     function goToChapterSelect() {
@@ -199,7 +317,11 @@
         allChapters.forEach(chap => {
             if (selectedClass === "all" || chap.startsWith(selectedClass)) {
                 const btn = document.createElement('button');
-                btn.className = 'chapter-btn';
+                // [수정] 단원 선택 버튼도 토스 스타일 적용
+                btn.className = 'primary'; 
+                btn.style.backgroundColor = 'white';
+                btn.style.color = 'var(--toss-text-dark)';
+                btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
                 btn.innerText = "📖 " + chap.replace(selectedClass === "all" ? "" : selectedClass, "");
                 btn.onclick = () => loadGame(chap);
                 list.appendChild(btn);
@@ -247,7 +369,7 @@
         
         keys.forEach(key => {
             const val = parseInt(userData[key]) || 0;
-            const div = document.createElement('div');
+            const div = document.createElement('button'); // [수정] 접근성을 위해 button 태그 사용
             div.className = `grid-item ${CLASS_NAMES[val]}`;
             div.dataset.val = val;
             div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`;
@@ -283,50 +405,30 @@
             }
         });
     }
-// ★★★ [수정됨] 티어 아이콘 직접 주입 방식 (실패 확률 0%) ★★★
+
+    // [수정] 아이콘 직접 주입 방식 유지
     function updateTier(userData) {
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         let total = keys.length;
         let done = 0;
-        
-        // 데이터 집계
         keys.forEach(k => {
             let val = parseInt(userData[k]) || 0;
             if (val === 1 || val === 3) done++; 
         });
-
-        // 퍼센트 계산
         let percent = total === 0 ? 0 : (done / total) * 100;
-        
-        // 배지 요소 가져오기
         let badge = document.getElementById('tier-badge');
-        
-        // 변수 초기화
-        let tierName = "";
-        let tierClass = "";
-        let tierIcon = ""; // 아이콘 변수 추가
+        let tierName = "", tierClass = "", tierIcon = "";
 
-        // ★ 조건문에서 아이콘까지 한꺼번에 결정 (확실한 방법)
-        if (percent === 100) { 
-            tierName = "CHALLENGER"; tierClass = "tier-challenger"; tierIcon = "👑"; 
-        } else if (percent >= 90) { 
-            tierName = "DIAMOND"; tierClass = "tier-diamond"; tierIcon = "💎"; 
-        } else if (percent >= 70) { 
-            tierName = "PLATINUM"; tierClass = "tier-platinum"; tierIcon = "💠"; 
-        } else if (percent >= 50) { 
-            tierName = "GOLD"; tierClass = "tier-gold"; tierIcon = "🥇"; 
-        } else if (percent >= 30) { 
-            tierName = "SILVER"; tierClass = "tier-silver"; tierIcon = "🥈"; 
-        } else if (percent >= 10) { 
-            tierName = "BRONZE"; tierClass = "tier-bronze"; tierIcon = "🥉"; 
-        } else { 
-            tierName = "IRON"; tierClass = "tier-iron"; tierIcon = "🛡️"; 
-        }
+        if (percent === 100) { tierName = "CHALLENGER"; tierClass = "tier-challenger"; tierIcon = "👑"; }
+        else if (percent >= 90) { tierName = "DIAMOND"; tierClass = "tier-diamond"; tierIcon = "💎"; }
+        else if (percent >= 70) { tierName = "PLATINUM"; tierClass = "tier-platinum"; tierIcon = "💠"; }
+        else if (percent >= 50) { tierName = "GOLD"; tierClass = "tier-gold"; tierIcon = "🥇"; }
+        else if (percent >= 30) { tierName = "SILVER"; tierClass = "tier-silver"; tierIcon = "🥈"; }
+        else if (percent >= 10) { tierName = "BRONZE"; tierClass = "tier-bronze"; tierIcon = "🥉"; }
+        else { tierName = "IRON"; tierClass = "tier-iron"; tierIcon = "🛡️"; }
 
-        // 화면에 그리기
         badge.className = `tier-badge ${tierClass}`;
-        // innerText 대신 innerHTML을 써야 태그(span)가 먹힙니다!
-        badge.innerHTML = `<span class="tier-icon" style="margin-right:8px; font-size:1.2em;">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span>`;
+        badge.innerHTML = `<span class="tier-icon">${tierIcon}</span> <span>${tierName} (${Math.round(percent)}%)</span>`;
     }
 
     function updateChart(userData) {
@@ -345,11 +447,17 @@
                 labels: ['안품', '맞음', '틀림', '고침'],
                 datasets: [{
                     data: counts,
-                    backgroundColor: ['#f0f0f0', '#28a745', '#dc3545', '#17a2b8'],
-                    borderWidth: 1
+                    // [수정] 차트 색상도 파스텔톤으로 변경
+                    backgroundColor: ['#F2F4F6', '#00A86B', '#E31A1A', '#0064FF'],
+                    borderWidth: 0 // 테두리 제거
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                cutout: '65%', // 도넛 구멍 크기 조절
+                plugins: { legend: { display: false } } 
+            }
         });
     }
 
@@ -383,14 +491,14 @@
         let html = "";
         if (regretItem) {
             let rate = Math.round(questionStats[regretItem]);
-            html += `<div class="analysis-box" style="border-left-color: #dc3545;"><b>🚨 실수 주의!</b><br>${regretItem}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`;
+            html += `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${regretItem}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`;
         } else {
             html += `<div class="analysis-box">👍 실수 방어 성공!</div>`;
         }
 
         if (proudItem) {
             let rate = Math.round(questionStats[proudItem]);
-            html += `<div class="analysis-box" style="border-left-color: #28a745;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${proudItem}번을 고쳐냈군요! 대단합니다.</div>`;
+            html += `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${proudItem}번을 고쳐냈군요! 대단합니다.</div>`;
         }
 
         document.getElementById('analysis-content').innerHTML = html;
@@ -408,13 +516,13 @@
         const keysToSave = Object.keys(tempChanges);
 
         if (keysToSave.length === 0) {
-            statusDiv.innerText = "변경사항 없음";
-            statusDiv.style.color = "gray";
+            statusDiv.innerText = "변경사항이 없습니다";
+            statusDiv.style.color = "var(--toss-text-gray)";
             return;
         }
 
-        statusDiv.innerText = "저장 및 알림 전송 중...";
-        statusDiv.style.color = "orange";
+        statusDiv.innerText = "저장 및 제출 중...";
+        statusDiv.style.color = "var(--toss-blue)";
 
         const badge = document.getElementById('tier-badge').innerText;
 
@@ -435,17 +543,17 @@
                 throw new Error(json.message || "저장 실패");
             }
             
-            statusDiv.innerText = "✅ 저장 & 알림 완료!";
-            statusDiv.style.color = "green";
+            statusDiv.innerText = "✅ 제출이 완료되었습니다!";
+            statusDiv.style.color = "#00A86B";
             tempChanges = {};
-            setTimeout(() => { statusDiv.innerText = ""; }, 2000);
+            setTimeout(() => { statusDiv.innerText = ""; }, 3000);
             loadGame(currentSheetName);
         })
         .catch(err => {
             console.error(err);
-            statusDiv.innerText = "❌ 저장 실패!";
-            statusDiv.style.color = "red";
-            alert("오류가 발생했습니다.\n내용: " + err.message + "\n\n(Apps Script를 '새 버전'으로 배포했는지 꼭 확인하세요!)");
+            statusDiv.innerText = "❌ 저장 실패";
+            statusDiv.style.color = "#E31A1A";
+            alert("오류가 발생했습니다.\n(인터넷 연결을 확인해주세요)");
         });
     }
 
