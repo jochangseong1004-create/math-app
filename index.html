@@ -60,135 +60,68 @@
         .screen { display: none; flex-direction: column; }
         .active { display: flex; }
 
-        /* =========================================
-           ✨ [Ver 6.0] 심플한 아웃라인 배지 스타일
-           ========================================= */
+        /* [NEW] 챕터 버튼 스타일 (리스트 아이템) */
+        .chapter-btn {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 100%; padding: 18px 20px; 
+            background: white; border: 1px solid #F2F4F6; border-radius: 16px;
+            margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            text-align: left;
+        }
+        .chapter-btn:hover { background-color: #F9FAFB; }
+        .chap-name { font-size: 17px; font-weight: 600; color: #191F28; }
+        .chap-stat { font-size: 15px; font-weight: 500; color: #6B7684; display: flex; align-items: center; gap: 6px; }
+        .stat-icon { font-size: 18px; }
+
+        /* 미니멀 티어 배지 */
         .tier-badge {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             margin-bottom: 24px; padding: 24px 20px; 
-            border-radius: 20px;
-            background: white; /* 배경을 흰색으로 */
-            border: 2px solid #ddd; /* 기본 테두리 */
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-            transition: 0.3s;
+            border-radius: 20px; background: white; 
+            border: 2px solid #ddd; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: 0.3s;
         }
-
-        .tier-row { 
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 10px;
-        }
+        .tier-row { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
         .tier-icon { font-size: 40px; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-        
-        .tier-name { 
-            font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; 
-        }
-        
-        .rank-text { 
-            font-size: 14px; font-weight: 600; 
-            color: var(--toss-text-gray);
-            background: #F2F4F6; 
-            padding: 6px 14px; border-radius: 20px; 
-            margin-bottom: 15px;
-        }
+        .tier-name { font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .rank-text { font-size: 14px; font-weight: 600; color: var(--toss-text-gray); background: #F2F4F6; padding: 6px 14px; border-radius: 20px; margin-bottom: 15px; }
+        .tier-progress-bg { width: 100%; height: 8px; background: #F2F4F6; border-radius: 4px; overflow: hidden; }
+        .tier-progress-fill { height: 100%; background: #ddd; width: 0%; border-radius: 4px; transition: width 0.5s ease; }
 
-        /* 프로그레스 바 */
-        .tier-progress-bg {
-            width: 100%; height: 8px;
-            background: #F2F4F6;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        .tier-progress-fill {
-            height: 100%;
-            background: #ddd;
-            width: 0%;
-            border-radius: 4px;
-            transition: width 0.5s ease;
-        }
-
-        /* 티어별 색상 정의 (테두리 & 글자색 & 그림자) */
-        /* Iron (진회색) */
-        .tier-iron { border-color: #585858; color: #585858; box-shadow: 0 8px 20px rgba(88, 88, 88, 0.15); }
-        .tier-iron .tier-progress-fill { background: #585858; }
-
-        /* Bronze (구리색) */
-        .tier-bronze { border-color: #cd7f32; color: #cd7f32; box-shadow: 0 8px 20px rgba(205, 127, 50, 0.15); }
-        .tier-bronze .tier-progress-fill { background: #cd7f32; }
-
-        /* Silver (은색/청회색) */
-        .tier-silver { border-color: #7f8c8d; color: #7f8c8d; box-shadow: 0 8px 20px rgba(127, 140, 141, 0.15); }
-        .tier-silver .tier-progress-fill { background: #7f8c8d; }
-
-        /* Gold (황금색) */
-        .tier-gold { border-color: #FFB300; color: #FFB300; box-shadow: 0 8px 20px rgba(255, 179, 0, 0.2); }
-        .tier-gold .tier-progress-fill { background: #FFB300; }
-
-        /* Platinum (민트/청록) */
-        .tier-platinum { border-color: #00b894; color: #00b894; box-shadow: 0 8px 20px rgba(0, 184, 148, 0.2); }
-        .tier-platinum .tier-progress-fill { background: #00b894; }
-
-        /* Diamond (하늘색/다이아색) */
-        .tier-diamond { border-color: #00CEC9; color: #00CEC9; box-shadow: 0 8px 20px rgba(0, 206, 201, 0.2); }
-        .tier-diamond .tier-progress-fill { background: #00CEC9; }
-
-        /* Challenger (화려한 핑크/보라) - 얘는 좀 특별하게 그라데이션 텍스트 */
-        .tier-challenger { 
-            border: 3px solid transparent; 
-            background-image: linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); 
-            background-origin: border-box; 
-            background-clip: content-box, border-box; 
-            box-shadow: 0 10px 30px rgba(166, 193, 238, 0.3);
-        }
-        .tier-challenger .tier-name {
-            background: linear-gradient(to right, #fbc2eb, #a6c1ee);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        /* 티어별 색상 */
+        .tier-iron { border-color: #585858; color: #585858; } .tier-iron .tier-progress-fill { background: #585858; }
+        .tier-bronze { border-color: #cd7f32; color: #cd7f32; } .tier-bronze .tier-progress-fill { background: #cd7f32; }
+        .tier-silver { border-color: #7f8c8d; color: #7f8c8d; } .tier-silver .tier-progress-fill { background: #7f8c8d; }
+        .tier-gold { border-color: #FFB300; color: #FFB300; } .tier-gold .tier-progress-fill { background: #FFB300; }
+        .tier-platinum { border-color: #00b894; color: #00b894; } .tier-platinum .tier-progress-fill { background: #00b894; }
+        .tier-diamond { border-color: #00CEC9; color: #00CEC9; } .tier-diamond .tier-progress-fill { background: #00CEC9; }
+        .tier-challenger { border: 3px solid transparent; background-image: linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); background-origin: border-box; background-clip: content-box, border-box; }
+        .tier-challenger .tier-name { background: linear-gradient(to right, #fbc2eb, #a6c1ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .tier-challenger .tier-progress-fill { background: linear-gradient(to right, #fbc2eb, #a6c1ee); }
 
-
-        /* 필터 */
         .filter-options { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-        .filter-label {
-            font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px;
-            padding: 8px 12px; background: #F9FAFB; border-radius: 20px;
-            color: var(--toss-text-gray); transition: 0.2s; font-weight: 500;
-        }
+        .filter-label { font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: #F9FAFB; border-radius: 20px; color: var(--toss-text-gray); transition: 0.2s; font-weight: 500; }
         .filter-label:has(input:checked) { background-color: #E8F3FF; color: var(--toss-blue); font-weight: 700; }
 
-        /* 그리드 */
         .grid-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
-        .grid-item {
-            aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background-color: white; border-radius: var(--radius-M); border: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s;
-        }
+        .grid-item { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: white; border-radius: var(--radius-M); border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: all 0.2s; }
         .grid-item.hidden { display: none; }
         
         .status-0 { background-color: white; color: var(--toss-text-gray); }
         .status-1 { background-color: #E3FCEF; color: #00A86B; box-shadow: inset 0 0 0 2px #00A86B; }
         .status-2 { background-color: #FFEBEB; color: #E31A1A; box-shadow: inset 0 0 0 2px #E31A1A; }
-        .status-3 { 
-            background-color: #f0fff4; 
-            color: #218c74; 
-            box-shadow: inset 0 0 0 2px #218c74;
-            background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(33, 140, 116, 0.1) 5px, rgba(33, 140, 116, 0.1) 10px);
-        }
+        .status-3 { background-color: #f0fff4; color: #218c74; box-shadow: inset 0 0 0 2px #218c74; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(33, 140, 116, 0.1) 5px, rgba(33, 140, 116, 0.1) 10px); }
 
         .q-num { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
         .q-icon { font-size: 24px; }
         
-        /* 로딩 스피너 */
         .loader-wrapper { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 2000; display: none; justify-content: center; align-items: center; border-radius: var(--radius-L); }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--toss-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .chart-container { width: 65%; margin: 0 auto 20px auto; position: relative; }
         
-        /* 모달 스타일 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(3px); }
         .modal-content { background: white; padding: 28px; border-radius: var(--radius-L); width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-        
         .analysis-box { background: #F9FAFB; padding: 16px; border-radius: var(--radius-M); margin-bottom: 12px; border-left: 5px solid var(--toss-blue); text-align: left; }
         .warning-box { background: #F2F4F6; padding: 14px; border-radius: var(--radius-M); margin-top: 15px; color: var(--toss-text-gray); font-size: 13px; text-align: center; }
 
@@ -227,20 +160,12 @@
         <h3 id="game-title" style="text-align:center; margin:0 0 20px 0;"></h3>
         
         <div id="tier-badge" class="tier-badge tier-iron">
-            <div class="tier-row">
-                <span class="tier-icon">🛡️</span> 
-                <span class="tier-name">IRON</span>
-            </div>
+            <div class="tier-row"><span class="tier-icon">🛡️</span> <span class="tier-name">IRON</span></div>
             <div class="rank-text" id="rank-display">순위 계산중...</div>
-            
-            <div class="tier-progress-bg">
-                <div id="tier-progress-fill" class="tier-progress-fill"></div>
-            </div>
+            <div class="tier-progress-bg"><div id="tier-progress-fill" class="tier-progress-fill"></div></div>
         </div>
 
-        <div class="chart-container">
-            <canvas id="progressChart"></canvas>
-        </div>
+        <div class="chart-container"><canvas id="progressChart"></canvas></div>
 
         <div class="filter-options">
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0" hidden>⚪ 안품</label>
@@ -273,10 +198,7 @@
 <div id="exit-modal" class="modal-overlay">
     <div class="modal-content">
         <h3 style="margin-bottom:10px;">잠깐만요! 🛑</h3>
-        <p style="color:var(--toss-text-gray); margin-bottom:20px;">
-            저장하지 않은 변경사항이 있습니다.<br>
-            저장하고 목록으로 나갈까요?
-        </p>
+        <p style="color:var(--toss-text-gray); margin-bottom:20px;">저장하지 않은 변경사항이 있습니다.<br>저장하고 목록으로 나갈까요?</p>
         <div class="modal-btn-group">
             <button class="btn-yes" onclick="saveAndExit()">네, 저장하고 나갈래요</button>
             <button class="btn-no" onclick="exitWithoutSave()">아니요, 그냥 나갈래요</button>
@@ -286,10 +208,9 @@
 </div>
 
 <script>
-    // ★★★ 선생님 URL ★★★
+    // ★★★ 선생님의 URL로 교체 ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
-    // 뾱! 소리
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playPopSound() {
         if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -306,34 +227,23 @@
         osc.stop(audioCtx.currentTime + 0.1);
     }
 
-    function toggleLoader(show) {
-        document.getElementById('global-loader').style.display = show ? 'flex' : 'none';
-    }
+    function toggleLoader(show) { document.getElementById('global-loader').style.display = show ? 'flex' : 'none'; }
 
     window.addEventListener('popstate', function(event) {
-        if (document.getElementById('screen-game').classList.contains('active')) {
-            checkBackNavigation(); 
-        }
+        if (document.getElementById('screen-game').classList.contains('active')) { checkBackNavigation(); }
     });
 
     function checkBackNavigation() {
         if (Object.keys(tempChanges).length > 0) {
             history.pushState({page: 'game'}, document.title, "#game"); 
             document.getElementById('exit-modal').style.display = 'flex';
-        } else {
-            exitWithoutSave();
-        }
+        } else { exitWithoutSave(); }
     }
 
-    function saveAndExit() {
-        document.getElementById('exit-modal').style.display = 'none';
-        saveData(true); 
-    }
-
+    function saveAndExit() { document.getElementById('exit-modal').style.display = 'none'; saveData(true); }
     function exitWithoutSave() {
         document.getElementById('exit-modal').style.display = 'none';
-        tempChanges = {}; 
-        currentSheetName = "";
+        tempChanges = {}; currentSheetName = "";
         showScreen('screen-chapter');
         history.replaceState(null, null, ' ');
     }
@@ -358,18 +268,23 @@
         userCredentials.pw = pw;
         toggleLoader(true);
 
-        fetch(GOOGLE_SCRIPT_URL + "?action=getChapters")
+        // [NEW] 로그인 시 'loginAndGetChapters' 호출
+        fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw))
         .then(res => res.json())
-        .then(chapters => {
+        .then(data => {
             toggleLoader(false);
-            allChapters = chapters; 
+            if (!data || data.length === 0) {
+                alert("학생 정보를 찾을 수 없습니다. (비번 확인)");
+                return;
+            }
+            allChapters = data; // 서버가 계산해준 통계 리스트
             showScreen('screen-chapter');
-            setupClassFilter(chapters);
+            setupClassFilter(data);
             filterChapters(); 
         })
         .catch(err => {
             toggleLoader(false);
-            alert("목록 로딩 실패.");
+            alert("로딩 실패. (" + err.message + ")");
         });
     }
 
@@ -378,7 +293,8 @@
         filter.innerHTML = '<option value="all">전체 수업 보기</option>';
         const classes = new Set();
         chapters.forEach(chap => {
-            const match = chap.match(/^\[(.*?)\]/);
+            // chap은 이제 {name: "1단원", percent: 90, tier: "GOLD"} 객체임
+            const match = chap.name.match(/^\[(.*?)\]/);
             if (match) classes.add(match[0]); 
         });
         classes.forEach(cls => {
@@ -393,15 +309,20 @@
         const selectedClass = document.getElementById('class-filter').value;
         const list = document.getElementById('chapter-list');
         list.innerHTML = "";
+        
         allChapters.forEach(chap => {
-            if (selectedClass === "all" || chap.startsWith(selectedClass)) {
+            if (selectedClass === "all" || chap.name.startsWith(selectedClass)) {
                 const btn = document.createElement('button');
-                btn.className = 'primary'; 
-                btn.style.backgroundColor = 'white';
-                btn.style.color = '#191F28';
-                btn.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
-                btn.innerText = "📖 " + chap.replace(selectedClass === "all" ? "" : selectedClass, "");
-                btn.onclick = () => loadGame(chap);
+                btn.className = 'chapter-btn';
+                
+                // [NEW] 버튼 안에 아이콘과 퍼센트 표시
+                const tierIcon = TIER_ICONS[chap.tier] || "🛡️";
+                btn.innerHTML = `
+                    <span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span>
+                    <span class="chap-stat"><span class="stat-icon">${tierIcon}</span> ${chap.percent}%</span>
+                `;
+                
+                btn.onclick = () => loadGame(chap.name);
                 list.appendChild(btn);
             }
         });
@@ -473,18 +394,13 @@
         const items = document.querySelectorAll('.grid-item');
         items.forEach(item => {
             const val = parseInt(item.dataset.val);
-            if (checkedValues.includes(val)) {
-                item.classList.remove('hidden');
-            } else {
-                item.classList.add('hidden');
-            }
+            if (checkedValues.includes(val)) { item.classList.remove('hidden'); } else { item.classList.add('hidden'); }
         });
     }
 
     function getRank(myData, allData) {
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         if (keys.length === 0) return "-";
-        
         let scores = allData.map(student => {
             let score = 0;
             keys.forEach(k => {
@@ -493,16 +409,13 @@
             });
             return { name: student['이름'], score: score };
         });
-
         let myScore = 0;
         keys.forEach(k => {
             let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
             if (val === 1 || val === 3) myScore++;
         });
-
         let myEntryIndex = scores.findIndex(s => s.name === myData['이름']);
         if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore;
-
         scores.sort((a, b) => b.score - a.score);
         let rank = scores.findIndex(s => s.name === myData['이름']) + 1;
         return `${rank}위 / ${scores.length}명`;
@@ -530,17 +443,10 @@
 
         let rankText = getRank(userData, currentClassData);
         badge.className = `tier-badge ${tierClass}`;
-        
-        // 아이콘+이름 / 순위 / 게이지바 구성
         badge.innerHTML = `
-            <div class="tier-row">
-                <span class="tier-icon">${tierIcon}</span> 
-                <span class="tier-name">${tierName}</span>
-            </div>
+            <div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span class="tier-name">${tierName}</span></div>
             <div class="rank-text">현재 순위 : ${rankText}</div>
-            <div class="tier-progress-bg">
-                <div class="tier-progress-fill" style="width:${percent}%"></div>
-            </div>
+            <div class="tier-progress-bg"><div class="tier-progress-fill" style="width:${percent}%"></div></div>
         `;
     }
 
@@ -549,14 +455,9 @@
         const pCtx = patternCanvas.getContext('2d');
         patternCanvas.width = 10;
         patternCanvas.height = 10;
-        pCtx.fillStyle = '#E8F5E9'; 
-        pCtx.fillRect(0,0,10,10);
-        pCtx.strokeStyle = '#218c74'; 
-        pCtx.lineWidth = 2;
-        pCtx.beginPath();
-        pCtx.moveTo(0, 10);
-        pCtx.lineTo(10, 0);
-        pCtx.stroke();
+        pCtx.fillStyle = '#E8F5E9'; pCtx.fillRect(0,0,10,10);
+        pCtx.strokeStyle = '#218c74'; pCtx.lineWidth = 2;
+        pCtx.beginPath(); pCtx.moveTo(0, 10); pCtx.lineTo(10, 0); pCtx.stroke();
         return pCtx.createPattern(patternCanvas, 'repeat');
     }
 
@@ -687,7 +588,8 @@
         toggleLoader(true); 
         statusDiv.innerText = "저장 및 제출 중...";
         
-        const badge = document.getElementById('tier-badge').innerText.split('\n')[0]; // 알림엔 첫 줄만
+        // 줄바꿈 문자 제거 후 텍스트만 전송
+        const badge = document.getElementById('tier-badge').innerText.replace(/\n/g, " ");
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
