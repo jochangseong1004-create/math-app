@@ -60,7 +60,7 @@
         .screen { display: none; flex-direction: column; }
         .active { display: flex; }
 
-        /* [NEW] 챕터 버튼 스타일 (리스트 아이템) */
+        /* 챕터 버튼 (대시보드) 스타일 */
         .chapter-btn {
             display: flex; justify-content: space-between; align-items: center;
             width: 100%; padding: 18px 20px; 
@@ -70,8 +70,8 @@
         }
         .chapter-btn:hover { background-color: #F9FAFB; }
         .chap-name { font-size: 17px; font-weight: 600; color: #191F28; }
-        .chap-stat { font-size: 15px; font-weight: 500; color: #6B7684; display: flex; align-items: center; gap: 6px; }
-        .stat-icon { font-size: 18px; }
+        .chap-stat { font-size: 15px; font-weight: 600; color: #6B7684; display: flex; align-items: center; gap: 8px; }
+        .stat-icon { font-size: 20px; }
 
         /* 미니멀 티어 배지 */
         .tier-badge {
@@ -208,7 +208,7 @@
 </div>
 
 <script>
-    // ★★★ 선생님의 URL로 교체 ★★★
+    // ★★★ 선생님 URL로 교체 필수 ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -241,11 +241,31 @@
     }
 
     function saveAndExit() { document.getElementById('exit-modal').style.display = 'none'; saveData(true); }
+    
+    // ★ [수정됨] 목록으로 나갈 때 데이터를 다시 불러옵니다!
     function exitWithoutSave() {
         document.getElementById('exit-modal').style.display = 'none';
-        tempChanges = {}; currentSheetName = "";
-        showScreen('screen-chapter');
-        history.replaceState(null, null, ' ');
+        tempChanges = {}; 
+        currentSheetName = "";
+        
+        // 목록 화면 가기 전 최신 데이터 로드
+        toggleLoader(true);
+        fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(userCredentials.name) + "&pw=" + encodeURIComponent(userCredentials.pw))
+        .then(res => res.json())
+        .then(data => {
+            toggleLoader(false);
+            if (data && data.length > 0) {
+                allChapters = data;
+                filterChapters(); // 최신 점수로 리스트 갱신
+            }
+            showScreen('screen-chapter');
+            history.replaceState(null, null, ' ');
+        })
+        .catch(err => {
+            toggleLoader(false);
+            showScreen('screen-chapter'); // 에러나도 일단 이동
+            history.replaceState(null, null, ' ');
+        });
     }
 
     let userCredentials = { name: "", pw: "" };
@@ -268,23 +288,19 @@
         userCredentials.pw = pw;
         toggleLoader(true);
 
-        // [NEW] 로그인 시 'loginAndGetChapters' 호출
         fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw))
         .then(res => res.json())
         .then(data => {
             toggleLoader(false);
-            if (!data || data.length === 0) {
-                alert("학생 정보를 찾을 수 없습니다. (비번 확인)");
-                return;
-            }
-            allChapters = data; // 서버가 계산해준 통계 리스트
+            if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; }
+            allChapters = data; 
             showScreen('screen-chapter');
             setupClassFilter(data);
             filterChapters(); 
         })
         .catch(err => {
             toggleLoader(false);
-            alert("로딩 실패. (" + err.message + ")");
+            alert("목록 로딩 실패.");
         });
     }
 
@@ -293,7 +309,6 @@
         filter.innerHTML = '<option value="all">전체 수업 보기</option>';
         const classes = new Set();
         chapters.forEach(chap => {
-            // chap은 이제 {name: "1단원", percent: 90, tier: "GOLD"} 객체임
             const match = chap.name.match(/^\[(.*?)\]/);
             if (match) classes.add(match[0]); 
         });
@@ -315,11 +330,11 @@
                 const btn = document.createElement('button');
                 btn.className = 'chapter-btn';
                 
-                // [NEW] 버튼 안에 아이콘과 퍼센트 표시
+                // [NEW] 대시보드 아이템 (92%, 아이콘)
                 const tierIcon = TIER_ICONS[chap.tier] || "🛡️";
                 btn.innerHTML = `
                     <span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span>
-                    <span class="chap-stat"><span class="stat-icon">${tierIcon}</span> ${chap.percent}%</span>
+                    <span class="chap-stat">${chap.percent}% <span class="stat-icon">${tierIcon}</span></span>
                 `;
                 
                 btn.onclick = () => loadGame(chap.name);
@@ -588,8 +603,7 @@
         toggleLoader(true); 
         statusDiv.innerText = "저장 및 제출 중...";
         
-        // 줄바꿈 문자 제거 후 텍스트만 전송
-        const badge = document.getElementById('tier-badge').innerText.replace(/\n/g, " ");
+        const badge = document.getElementById('tier-badge').innerText.split('\n')[0]; 
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
