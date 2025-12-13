@@ -60,7 +60,7 @@
         .screen { display: none; flex-direction: column; }
         .active { display: flex; }
 
-        /* 챕터 버튼 (대시보드) 스타일 */
+        /* 챕터 버튼 */
         .chapter-btn {
             display: flex; justify-content: space-between; align-items: center;
             width: 100%; padding: 18px 20px; 
@@ -73,7 +73,7 @@
         .chap-stat { font-size: 15px; font-weight: 600; color: #6B7684; display: flex; align-items: center; gap: 8px; }
         .stat-icon { font-size: 20px; }
 
-        /* 미니멀 티어 배지 */
+        /* 티어 배지 */
         .tier-badge {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             margin-bottom: 24px; padding: 24px 20px; 
@@ -208,7 +208,7 @@
 </div>
 
 <script>
-    // ★★★ 선생님 URL로 교체 필수 ★★★
+    // ★★★ 선생님 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -242,30 +242,13 @@
 
     function saveAndExit() { document.getElementById('exit-modal').style.display = 'none'; saveData(true); }
     
-    // ★ [수정됨] 목록으로 나갈 때 데이터를 다시 불러옵니다!
+    // [수정] 딜레이 없이 즉시 이동
     function exitWithoutSave() {
         document.getElementById('exit-modal').style.display = 'none';
         tempChanges = {}; 
         currentSheetName = "";
-        
-        // 목록 화면 가기 전 최신 데이터 로드
-        toggleLoader(true);
-        fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(userCredentials.name) + "&pw=" + encodeURIComponent(userCredentials.pw))
-        .then(res => res.json())
-        .then(data => {
-            toggleLoader(false);
-            if (data && data.length > 0) {
-                allChapters = data;
-                filterChapters(); // 최신 점수로 리스트 갱신
-            }
-            showScreen('screen-chapter');
-            history.replaceState(null, null, ' ');
-        })
-        .catch(err => {
-            toggleLoader(false);
-            showScreen('screen-chapter'); // 에러나도 일단 이동
-            history.replaceState(null, null, ' ');
-        });
+        showScreen('screen-chapter'); // 즉시 이동
+        history.replaceState(null, null, ' ');
     }
 
     let userCredentials = { name: "", pw: "" };
@@ -330,7 +313,6 @@
                 const btn = document.createElement('button');
                 btn.className = 'chapter-btn';
                 
-                // [NEW] 대시보드 아이템 (92%, 아이콘)
                 const tierIcon = TIER_ICONS[chap.tier] || "🛡️";
                 btn.innerHTML = `
                     <span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span>
@@ -436,6 +418,16 @@
         return `${rank}위 / ${scores.length}명`;
     }
 
+    function getTierName(percent) {
+        if (percent === 100) return "CHALLENGER";
+        if (percent >= 90) return "DIAMOND";
+        if (percent >= 70) return "PLATINUM";
+        if (percent >= 50) return "GOLD";
+        if (percent >= 30) return "SILVER";
+        if (percent >= 10) return "BRONZE";
+        return "IRON";
+    }
+
     function updateTier(userData) {
         const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         let total = keys.length;
@@ -446,18 +438,15 @@
         });
         let percent = total === 0 ? 0 : (done / total) * 100;
         let badge = document.getElementById('tier-badge');
-        let tierName = "", tierClass = "", tierIcon = "";
-
-        if (percent === 100) { tierName = "CHALLENGER"; tierClass = "tier-challenger"; tierIcon = "👑"; }
-        else if (percent >= 90) { tierName = "DIAMOND"; tierClass = "tier-diamond"; tierIcon = "💎"; }
-        else if (percent >= 70) { tierName = "PLATINUM"; tierClass = "tier-platinum"; tierIcon = "💠"; }
-        else if (percent >= 50) { tierName = "GOLD"; tierClass = "tier-gold"; tierIcon = "🥇"; }
-        else if (percent >= 30) { tierName = "SILVER"; tierClass = "tier-silver"; tierIcon = "🥈"; }
-        else if (percent >= 10) { tierName = "BRONZE"; tierClass = "tier-bronze"; tierIcon = "🥉"; }
-        else { tierName = "IRON"; tierClass = "tier-iron"; tierIcon = "🛡️"; }
+        let tierName = getTierName(percent);
+        let tierIcon = TIER_ICONS[tierName] || "🛡️";
 
         let rankText = getRank(userData, currentClassData);
-        badge.className = `tier-badge ${tierClass}`;
+        badge.className = `tier-badge ${tierName.toLowerCase().replace(' ', '-')}`;
+        // CSS 클래스 매칭을 위해 tier-iron, tier-gold 등으로 설정 (JS함수 리턴값과 CSS클래스명 일치 필요)
+        // 위 CSS에서는 .tier-iron 처럼 소문자 사용.
+        badge.className = `tier-badge tier-${tierName.toLowerCase()}`;
+
         badge.innerHTML = `
             <div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span class="tier-name">${tierName}</span></div>
             <div class="rank-text">현재 순위 : ${rankText}</div>
@@ -589,6 +578,36 @@
         }
     }
 
+    // [NEW] 로컬 상태 업데이트 함수 (저장 후 목록 갱신용)
+    function updateLocalStats() {
+        let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
+        if (!myData) return;
+
+        const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
+        let total = 0;
+        let done = 0;
+        
+        keys.forEach(k => {
+            // tempChanges가 있으면 그걸 쓰고, 없으면 원래 데이터
+            let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
+            total++;
+            if (val === 1 || val === 3) done++;
+        });
+
+        let percent = total === 0 ? 0 : Math.round((done / total) * 100);
+        let tier = getTierName(percent);
+
+        // 목록(allChapters)에서 현재 단원 찾아서 갱신
+        let chapIndex = allChapters.findIndex(c => c.name === currentSheetName);
+        if (chapIndex !== -1) {
+            allChapters[chapIndex].percent = percent;
+            allChapters[chapIndex].tier = tier;
+        }
+        
+        // 목록 화면 UI 강제 갱신
+        filterChapters();
+    }
+
     function saveData(exitMode = false) {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
@@ -618,20 +637,28 @@
         })
         .then(res => res.json())
         .then(json => {
-            toggleLoader(false); 
+            
             if (json.status !== "success") {
+                toggleLoader(false);
                 throw new Error(json.message || "저장 실패");
             }
             
+            // ★ [핵심] 성공했으니, 내부 데이터를 갱신합니다!
+            updateLocalStats();
+
             statusDiv.innerText = "✅ 제출 완료!";
             statusDiv.style.color = "#00A86B";
-            tempChanges = {};
+            
+            tempChanges = {}; // 변경사항 초기화
+            
             setTimeout(() => { statusDiv.innerText = ""; }, 3000);
             
             if (exitMode) {
-                exitWithoutSave();
+                toggleLoader(false);
+                exitWithoutSave(); // 이제 나가도 딜레이 없음!
             } else {
-                loadGame(currentSheetName);
+                toggleLoader(false);
+                loadGame(currentSheetName); // 남을 거면 새로고침
             }
         })
         .catch(err => {
