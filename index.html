@@ -12,7 +12,7 @@
             --toss-bg: #F2F4F6;
             --toss-text-dark: #191F28;
             --toss-text-gray: #8B95A1;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             --radius-L: 24px;
             --radius-M: 16px;
         }
@@ -61,81 +61,91 @@
         .active { display: flex; }
 
         /* =========================================
-           ✨ [업그레이드] 티어 배지 스타일
+           ✨ [Ver 6.0] 심플한 아웃라인 배지 스타일
            ========================================= */
         .tier-badge {
-            position: relative;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             margin-bottom: 24px; padding: 24px 20px; 
             border-radius: 20px;
-            color: white; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15); /* 그림자 강화 */
-            overflow: hidden; /* 빛반사 효과가 밖으로 안 나가게 */
+            background: white; /* 배경을 흰색으로 */
+            border: 2px solid #ddd; /* 기본 테두리 */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             transition: 0.3s;
-        }
-
-        /* 반짝이는 효과 (Shine Animation) */
-        .tier-badge::before {
-            content: '';
-            position: absolute;
-            top: 0; left: -150%;
-            width: 100%; height: 100%;
-            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
-            transform: skewX(-20deg);
-            animation: shine 3s infinite;
-        }
-        @keyframes shine {
-            0% { left: -150%; }
-            20% { left: 150%; } /* 슉 지나감 */
-            100% { left: 150%; } /* 대기 */
         }
 
         .tier-row { 
             display: flex; align-items: center; justify-content: center;
-            z-index: 1; /* 배경보다 위에 */
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
-        .tier-icon { 
-            font-size: 36px; margin-right: 12px; 
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); /* 아이콘 입체감 */
+        .tier-icon { font-size: 40px; margin-right: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        
+        .tier-name { 
+            font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; 
         }
-        .tier-name { font-size: 24px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         
         .rank-text { 
             font-size: 14px; font-weight: 600; 
-            background: rgba(0, 0, 0, 0.25); 
+            color: var(--toss-text-gray);
+            background: #F2F4F6; 
             padding: 6px 14px; border-radius: 20px; 
-            z-index: 1;
-            backdrop-filter: blur(4px);
+            margin-bottom: 15px;
         }
 
-        /* 프로그레스 바 배경 */
+        /* 프로그레스 바 */
         .tier-progress-bg {
-            width: 100%; height: 6px;
-            background: rgba(0,0,0,0.2);
-            border-radius: 3px;
-            margin-top: 15px;
-            z-index: 1;
+            width: 100%; height: 8px;
+            background: #F2F4F6;
+            border-radius: 4px;
             overflow: hidden;
         }
-        /* 프로그레스 바 채움 */
         .tier-progress-fill {
             height: 100%;
-            background: white;
-            width: 0%; /* JS로 제어 */
-            border-radius: 3px;
+            background: #ddd;
+            width: 0%;
+            border-radius: 4px;
             transition: width 0.5s ease;
-            box-shadow: 0 0 10px rgba(255,255,255,0.8);
         }
 
-        /* 티어별 색상 (더 고급스러운 그라데이션) */
-        .tier-iron { background: linear-gradient(135deg, #434343 0%, #2b2b2b 100%); }
-        .tier-bronze { background: linear-gradient(135deg, #cd7f32 0%, #a05a2c 100%); }
-        .tier-silver { background: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%); }
-        .tier-gold { background: linear-gradient(135deg, #fce38a 0%, #f38181 100%); } /* 로즈골드 느낌 */
-        .tier-platinum { background: linear-gradient(135deg, #00cdac 0%, #009688 100%); }
-        .tier-diamond { background: linear-gradient(135deg, #5EFCE8 0%, #736EFE 100%); } /* 화려한 오로라 */
-        .tier-challenger { background: linear-gradient(135deg, #FDFC47 0%, #24FE41 100%); border: 2px solid white; }
+        /* 티어별 색상 정의 (테두리 & 글자색 & 그림자) */
+        /* Iron (진회색) */
+        .tier-iron { border-color: #585858; color: #585858; box-shadow: 0 8px 20px rgba(88, 88, 88, 0.15); }
+        .tier-iron .tier-progress-fill { background: #585858; }
+
+        /* Bronze (구리색) */
+        .tier-bronze { border-color: #cd7f32; color: #cd7f32; box-shadow: 0 8px 20px rgba(205, 127, 50, 0.15); }
+        .tier-bronze .tier-progress-fill { background: #cd7f32; }
+
+        /* Silver (은색/청회색) */
+        .tier-silver { border-color: #7f8c8d; color: #7f8c8d; box-shadow: 0 8px 20px rgba(127, 140, 141, 0.15); }
+        .tier-silver .tier-progress-fill { background: #7f8c8d; }
+
+        /* Gold (황금색) */
+        .tier-gold { border-color: #FFB300; color: #FFB300; box-shadow: 0 8px 20px rgba(255, 179, 0, 0.2); }
+        .tier-gold .tier-progress-fill { background: #FFB300; }
+
+        /* Platinum (민트/청록) */
+        .tier-platinum { border-color: #00b894; color: #00b894; box-shadow: 0 8px 20px rgba(0, 184, 148, 0.2); }
+        .tier-platinum .tier-progress-fill { background: #00b894; }
+
+        /* Diamond (하늘색/다이아색) */
+        .tier-diamond { border-color: #00CEC9; color: #00CEC9; box-shadow: 0 8px 20px rgba(0, 206, 201, 0.2); }
+        .tier-diamond .tier-progress-fill { background: #00CEC9; }
+
+        /* Challenger (화려한 핑크/보라) - 얘는 좀 특별하게 그라데이션 텍스트 */
+        .tier-challenger { 
+            border: 3px solid transparent; 
+            background-image: linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); 
+            background-origin: border-box; 
+            background-clip: content-box, border-box; 
+            box-shadow: 0 10px 30px rgba(166, 193, 238, 0.3);
+        }
+        .tier-challenger .tier-name {
+            background: linear-gradient(to right, #fbc2eb, #a6c1ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tier-challenger .tier-progress-fill { background: linear-gradient(to right, #fbc2eb, #a6c1ee); }
+
 
         /* 필터 */
         .filter-options { display: flex; justify-content: center; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
@@ -474,6 +484,7 @@
     function getRank(myData, allData) {
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         if (keys.length === 0) return "-";
+        
         let scores = allData.map(student => {
             let score = 0;
             keys.forEach(k => {
@@ -482,13 +493,16 @@
             });
             return { name: student['이름'], score: score };
         });
+
         let myScore = 0;
         keys.forEach(k => {
             let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
             if (val === 1 || val === 3) myScore++;
         });
+
         let myEntryIndex = scores.findIndex(s => s.name === myData['이름']);
         if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore;
+
         scores.sort((a, b) => b.score - a.score);
         let rank = scores.findIndex(s => s.name === myData['이름']) + 1;
         return `${rank}위 / ${scores.length}명`;
@@ -516,13 +530,17 @@
 
         let rankText = getRank(userData, currentClassData);
         badge.className = `tier-badge ${tierClass}`;
+        
+        // 아이콘+이름 / 순위 / 게이지바 구성
         badge.innerHTML = `
             <div class="tier-row">
                 <span class="tier-icon">${tierIcon}</span> 
                 <span class="tier-name">${tierName}</span>
             </div>
             <div class="rank-text">현재 순위 : ${rankText}</div>
-            <div class="tier-progress-bg"><div id="tier-progress-fill" class="tier-progress-fill" style="width:${percent}%"></div></div>
+            <div class="tier-progress-bg">
+                <div class="tier-progress-fill" style="width:${percent}%"></div>
+            </div>
         `;
     }
 
@@ -669,7 +687,7 @@
         toggleLoader(true); 
         statusDiv.innerText = "저장 및 제출 중...";
         
-        const badge = document.getElementById('tier-badge').innerText;
+        const badge = document.getElementById('tier-badge').innerText.split('\n')[0]; // 알림엔 첫 줄만
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
