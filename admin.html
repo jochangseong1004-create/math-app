@@ -24,11 +24,14 @@
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
         select { padding: 12px; border-radius: 8px; border: none; font-size: 16px; flex: 1; }
         
-        /* 필터 버튼 (4가지 색상) */
+        /* 필터 버튼 (다중 선택 스타일) */
         .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
-        .filter-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid #585b70; background: transparent; color: #cdd6f4; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; }
-        .filter-btn.active { background: white; color: var(--admin-dark); border-color: white; font-weight: bold; }
+        .filter-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid #585b70; background: transparent; color: #cdd6f4; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
         
+        /* 활성화된 필터 버튼 스타일 */
+        .filter-btn.active { background: white; color: var(--admin-dark); border-color: white; font-weight: bold; }
+        .filter-btn.active .dot { border: 1px solid rgba(0,0,0,0.1); } /* 활성화 시 점 테두리 살짝 */
+
         /* 상태 점 */
         .dot { display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; font-size: 12px; font-weight: bold; text-align: center; }
         .s-0 { color: #585b70; background: #1e1e2e; } /* 안품 */
@@ -77,11 +80,11 @@
                 <option value="">선택하세요...</option>
             </select>
             <div class="filter-group">
-                <button class="filter-btn active" onclick="setFilter(this, 'all')">전체</button>
-                <button class="filter-btn" onclick="setFilter(this, 1)"><span class="dot s-1" style="width:12px;height:12px;"></span> 맞음</button>
-                <button class="filter-btn" onclick="setFilter(this, 3)"><span class="dot s-3" style="width:12px;height:12px;"></span> 고침</button>
-                <button class="filter-btn" onclick="setFilter(this, 2)"><span class="dot s-2" style="width:12px;height:12px;"></span> 틀림</button>
-                <button class="filter-btn" onclick="setFilter(this, 0)"><span class="dot s-0" style="width:12px;height:12px;"></span> 안품</button>
+                <button class="filter-btn active" id="btn-all" onclick="toggleFilter('all')">전체</button>
+                <button class="filter-btn active" id="btn-1" onclick="toggleFilter(1)"><span class="dot s-1" style="width:12px;height:12px;"></span> 맞음</button>
+                <button class="filter-btn active" id="btn-3" onclick="toggleFilter(3)"><span class="dot s-3" style="width:12px;height:12px;"></span> 고침</button>
+                <button class="filter-btn active" id="btn-2" onclick="toggleFilter(2)"><span class="dot s-2" style="width:12px;height:12px;"></span> 틀림</button>
+                <button class="filter-btn active" id="btn-0" onclick="toggleFilter(0)"><span class="dot s-0" style="width:12px;height:12px;"></span> 안품</button>
             </div>
         </div>
 
@@ -108,7 +111,9 @@
     let allChapters = [];
     let allStudents = [];
     let currentMode = 'chapter'; // chapter or student
-    let currentFilter = 'all';
+    
+    // [핵심] 다중 필터 배열 (기본값: 모두 선택)
+    let activeFilters = [0, 1, 2, 3]; 
 
     function adminLogin() {
         const input = document.getElementById('admin-pw').value;
@@ -159,17 +164,52 @@
         });
     }
 
-    function setFilter(btn, val) {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentFilter = val;
-        loadData(); // 필터 변경 시 현재 데이터 다시 로드
+    // [핵심] 필터 토글 로직
+    function toggleFilter(val) {
+        if (val === 'all') {
+            // 전체 선택
+            activeFilters = [0, 1, 2, 3];
+        } else {
+            // 개별 토글
+            if (activeFilters.includes(val)) {
+                activeFilters = activeFilters.filter(v => v !== val);
+            } else {
+                activeFilters.push(val);
+            }
+        }
+        updateFilterUI();
+        loadData(); // 필터 변경 시 현재 데이터 다시 로드 (재렌더링)
     }
+
+    function updateFilterUI() {
+        // 모든 버튼 비활성화 먼저 하고
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        
+        // activeFilters에 있는 애들만 활성화
+        activeFilters.forEach(val => {
+            const btn = document.getElementById('btn-' + val);
+            if(btn) btn.classList.add('active');
+        });
+
+        // 4개가 다 켜져 있으면 '전체' 버튼도 켜기
+        if ([0, 1, 2, 3].every(v => activeFilters.includes(v))) {
+            document.getElementById('btn-all').classList.add('active');
+        }
+    }
+
+    // 로컬 데이터 캐싱용
+    let currentData = null;
 
     function loadData() {
         const value = document.getElementById('main-select').value;
         if(!value) return;
         
+        // 이미 데이터를 불러왔고 필터만 바꾸는 경우 서버 요청 스킵 (최적화)
+        // 하지만 여기선 간단하게 구현하기 위해 매번 요청하거나, 변수에 저장해두고 씀.
+        // 여기선 렌더링 함수만 다시 부르도록 수정.
+        
+        // 1. 셀렉트 박스 바뀌었을 때만 로딩
+        // (이 부분은 간단하게 구현하기 위해 그냥 항상 로딩하도록 둡니다. 나중에 최적화 가능)
         document.getElementById('loader').style.display = 'block';
         
         if(currentMode === 'chapter') {
@@ -199,21 +239,21 @@
         data.forEach(student => {
             let total = 0, done = 0;
             let statusHTML = "";
-            let hasVisibleItems = false; // 필터링된 항목이 하나라도 있는지
+            let hasVisibleItems = false; 
 
             keys.forEach(key => {
                 let val = parseInt(student[key]) || 0;
                 total++;
                 if(val === 1 || val === 3) done++;
                 
-                if(currentFilter === 'all' || currentFilter === val) {
+                // [수정] 다중 필터 체크: activeFilters 배열에 val이 있는지 확인
+                if(activeFilters.includes(val)) {
                     let symbol = val === 0 ? "·" : (val === 1 ? "O" : (val === 2 ? "X" : "V"));
                     statusHTML += `<span class="dot s-${val}" title="${key}번">${symbol}</span> `;
                     hasVisibleItems = true;
                 }
             });
 
-            // 필터링된 항목이 없으면 행을 숨길 수도 있지만, 여기선 빈 칸으로라도 보여줌 (이름은 보여야 하니까)
             let percent = total === 0 ? 0 : Math.round((done/total)*100);
             let tr = document.createElement('tr');
             tr.innerHTML = `<td style="font-weight:bold;">${student['이름']}</td><td>${percent}%</td><td style="text-align:left;">${statusHTML}</td>`;
@@ -236,13 +276,13 @@
                 let val = scores[k];
                 if(val === 1 || val === 3) correct++;
                 
-                if(currentFilter === 'all' || currentFilter === val) {
+                // [수정] 다중 필터 체크
+                if(activeFilters.includes(val)) {
                     filteredItems.push({ num: k, val: val });
                 }
             });
 
-            // 필터링된 항목이 없으면 카드 생성 X
-            if(filteredItems.length === 0) return;
+            if(filteredItems.length === 0) return; // 필터된게 하나도 없으면 카드 숨김
 
             let percent = total === 0 ? 0 : Math.round((correct/total)*100);
             
