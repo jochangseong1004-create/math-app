@@ -20,14 +20,21 @@
         body {
             font-family: "Pretendard Variable", Pretendard, -apple-system, sans-serif;
             background-color: var(--toss-bg);
-            margin: 0; padding: 20px; color: var(--toss-text-dark);
+            margin: 0;
+            padding: 20px;
+            color: var(--toss-text-dark);
             -webkit-tap-highlight-color: transparent;
         }
 
         .container {
-            max-width: 600px; margin: 0 auto; background: white; padding: 30px 24px;
-            border-radius: var(--radius-L); box-shadow: var(--card-shadow);
-            min-height: 85vh; position: relative;
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px 24px;
+            border-radius: var(--radius-L);
+            box-shadow: var(--card-shadow);
+            min-height: 85vh;
+            position: relative;
         }
 
         h2, h3 { text-align: center; color: var(--toss-text-dark); margin-bottom: 20px; font-weight: 700; }
@@ -45,19 +52,21 @@
         input, select {
             width: 100%; padding: 16px; margin-bottom: 12px; border: none;
             background-color: #F9FAFB; border-radius: var(--radius-M);
-            font-size: 17px; font-family: inherit; box-sizing: border-box; 
+            font-size: 17px; font-family: inherit;
+            box-sizing: border-box; 
         }
         input:focus, select:focus { outline: 2px solid var(--toss-blue); background: white; }
 
         .screen { display: none; flex-direction: column; }
         .active { display: flex; }
 
-        /* 대시보드 리스트 */
+        /* 챕터 버튼 */
         .chapter-btn {
             display: flex; justify-content: space-between; align-items: center;
             width: 100%; padding: 18px 20px; 
             background: white; border: 1px solid #F2F4F6; border-radius: 16px;
-            margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); text-align: left;
+            margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            text-align: left;
         }
         .chapter-btn:hover { background-color: #F9FAFB; }
         .chap-name { font-size: 17px; font-weight: 600; color: #191F28; }
@@ -78,7 +87,7 @@
         .tier-progress-bg { width: 100%; height: 8px; background: #F2F4F6; border-radius: 4px; overflow: hidden; }
         .tier-progress-fill { height: 100%; background: #ddd; width: 0%; border-radius: 4px; transition: width 0.5s ease; }
 
-        /* 티어별 스타일 */
+        /* 티어별 색상 */
         .tier-iron { border-color: #585858; color: #585858; } .tier-iron .tier-progress-fill { background: #585858; }
         .tier-bronze { border-color: #cd7f32; color: #cd7f32; } .tier-bronze .tier-progress-fill { background: #cd7f32; }
         .tier-silver { border-color: #7f8c8d; color: #7f8c8d; } .tier-silver .tier-progress-fill { background: #7f8c8d; }
@@ -149,19 +158,24 @@
 
     <div id="screen-game" class="screen">
         <h3 id="game-title" style="text-align:center; margin:0 0 20px 0;"></h3>
+        
         <div id="tier-badge" class="tier-badge tier-iron">
             <div class="tier-row"><span class="tier-icon">🛡️</span> <span class="tier-name">IRON</span></div>
             <div class="rank-text" id="rank-display">순위 계산중...</div>
             <div class="tier-progress-bg"><div id="tier-progress-fill" class="tier-progress-fill"></div></div>
         </div>
+
         <div class="chart-container"><canvas id="progressChart"></canvas></div>
+
         <div class="filter-options">
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0" hidden>⚪ 안품</label>
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="1" hidden>🟢 맞음</label>
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="2" hidden>🔴 틀림</label>
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="3" hidden>✅ 고침</label>
         </div>
+        
         <div class="grid-container" id="grid-box"></div>
+
         <div style="text-align:center; margin-top:20px;">
             <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom:8px;"></div>
             <div style="display:flex; gap:10px;">
@@ -182,7 +196,7 @@
 </div>
 
 <script>
-    // ★★★ [중요] 여기에 선생님의 스크립트 배포 주소를 넣으세요 ★★★
+    // ★★★ 선생님 URL (다시 한번 확인해주세요!) ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     // 오디오 설정
@@ -216,10 +230,8 @@
     function exitWithoutSave() {
         document.getElementById('exit-modal').style.display = 'none';
         tempChanges = {}; currentSheetName = "";
-        
-        // 목록으로 나갈 때 로컬 데이터 기반으로 화면만 전환 (서버 통신 X = 딜레이 X)
         showScreen('screen-chapter');
-        filterChapters(); // UI 갱신
+        filterChapters(); // UI 갱신 (로컬 데이터 기반)
         history.replaceState(null, null, ' ');
     }
 
@@ -243,18 +255,27 @@
         userCredentials.pw = pw;
         toggleLoader(true);
 
+        // [★ 진단 모드] 서버 응답을 텍스트로 먼저 받아서 검사
         fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw))
         .then(async (res) => {
             if (!res.ok) {
-                // ★ 서버 응답 에러 진단
                 let text = await res.text();
-                throw new Error("서버 에러 (" + res.status + "): " + text.substring(0, 100));
+                throw new Error("서버 연결 실패 (" + res.status + ")\n" + text.substring(0, 50));
             }
-            return res.json();
+            return res.text();
+        })
+        .then(text => {
+            try {
+                return JSON.parse(text); // JSON 변환 시도
+            } catch (e) {
+                // HTML(구글 로그인창 등)이 오면 여기서 걸림
+                console.error("Non-JSON response:", text);
+                throw new Error("서버가 올바른 데이터를 주지 않았습니다.\n(구글 로그인 창이나 에러 페이지가 떴을 수 있습니다)\n내용 앞부분: " + text.substring(0, 50));
+            }
         })
         .then(data => {
             toggleLoader(false);
-            if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다.\n이름/비번을 확인해주세요."); return; }
+            if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다.\n(이름/비번 재확인, 혹은 엑셀에 데이터가 있는지 확인해주세요)"); return; }
             allChapters = data; 
             showScreen('screen-chapter');
             setupClassFilter(data);
@@ -262,12 +283,8 @@
         })
         .catch(err => {
             toggleLoader(false);
-            // ★ 친절한 에러 메시지
-            if (err.message.includes("SyntaxError")) {
-                alert("서버 주소 오류!\nHTML 코드 맨 위의 주소가 정확한지 확인해주세요.\n(배포된 웹 앱 URL이어야 합니다)");
-            } else {
-                alert("오류 발생: " + err.message);
-            }
+            // ★ 에러 원인을 화면에 표시
+            alert("🛑 목록 로딩 실패!\n\n원인: " + err.message + "\n\n(이 메시지를 캡쳐해서 알려주시면 바로 해결 가능합니다!)");
         });
     }
 
@@ -297,7 +314,6 @@
                 const btn = document.createElement('button');
                 btn.className = 'chapter-btn';
                 
-                // tier 값이 없는 경우 대비
                 const safeTier = chap.tier || "IRON";
                 const safePercent = chap.percent || 0;
                 const tierIcon = TIER_ICONS[safeTier] || "🛡️";
@@ -312,7 +328,6 @@
         });
     }
 
-    // 이하 기존 로직 유지 (loadGame, renderGrid 등)...
     function loadGame(sheetName) {
         currentSheetName = sheetName;
         history.pushState({page: 'game'}, document.title, "#game");
@@ -340,10 +355,11 @@
         })
         .catch(err => {
             toggleLoader(false);
-            alert("로딩 실패: " + err.message);
+            alert("로딩 중 오류 발생!\n" + err.message);
         });
     }
 
+    // 이하 렌더링, 저장 함수 등은 Ver 8.0과 동일
     function renderGrid(userData) {
         const gridBox = document.getElementById('grid-box');
         gridBox.innerHTML = "";
@@ -587,18 +603,13 @@
         .then(res => res.json())
         .then(json => {
             if (json.status !== "success") { toggleLoader(false); throw new Error(json.message || "저장 실패"); }
-            updateLocalStats(); // 로컬 갱신
+            updateLocalStats(); 
             statusDiv.innerText = "✅ 제출 완료!";
             statusDiv.style.color = "#00A86B";
             tempChanges = {}; 
             setTimeout(() => { statusDiv.innerText = ""; }, 3000);
-            if (exitMode) {
-                toggleLoader(false);
-                exitWithoutSave();
-            } else {
-                toggleLoader(false);
-                loadGame(currentSheetName);
-            }
+            if (exitMode) { toggleLoader(false); exitWithoutSave(); } 
+            else { toggleLoader(false); loadGame(currentSheetName); }
         })
         .catch(err => {
             toggleLoader(false);
