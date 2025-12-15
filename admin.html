@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>관리자 모드 - 조창성T</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         :root { --admin-dark: #1e1e2e; --admin-accent: #7d5fff; --text-white: #f8f9fa; }
         body { font-family: "Pretendard Variable", sans-serif; background-color: var(--admin-dark); color: var(--text-white); margin: 0; padding: 20px; }
@@ -21,32 +22,26 @@
         .nav-btn { flex: 1; padding: 15px; background: #313244; color: #a6adc8; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; }
         .nav-btn.active { background: var(--admin-accent); color: white; font-weight: bold; }
 
-        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-        select { padding: 12px; border-radius: 8px; border: none; font-size: 16px; flex: 1; }
+        .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        select { padding: 12px; border-radius: 8px; border: none; font-size: 16px; flex: 1; min-width: 150px; }
         
-        /* 필터 버튼 (다중 선택 스타일) */
+        .btn-capture { background-color: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-capture:hover { background-color: #27ae60; }
+
         .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid #585b70; background: transparent; color: #cdd6f4; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
-        
-        /* 활성화된 필터 버튼 스타일 */
         .filter-btn.active { background: white; color: var(--admin-dark); border-color: white; font-weight: bold; }
-        .filter-btn.active .dot { border: 1px solid rgba(0,0,0,0.1); } /* 활성화 시 점 테두리 살짝 */
+        .filter-btn.active .dot { border: 1px solid rgba(0,0,0,0.1); }
 
-        /* 상태 점 */
-        .dot { display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 50%; font-size: 12px; font-weight: bold; text-align: center; }
-        .s-0 { color: #585b70; background: #1e1e2e; } /* 안품 */
-        .s-1 { background: #a6e3a1; color: #1e1e2e; } /* 맞음 (초록) */
-        .s-2 { background: #f38ba8; color: #1e1e2e; } /* 틀림 (빨강) */
-        .s-3 { background: #89b4fa; color: #1e1e2e; } /* 고침 (파랑) */
+        .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
+        .s-0 { background: #585b70; } 
+        .s-1 { background: #a6e3a1; } 
+        .s-2 { background: #f38ba8; } 
+        .s-3 { background: #89b4fa; } 
 
-        .data-table-wrapper { overflow-x: auto; background: #313244; border-radius: 15px; padding: 20px; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #45475a; }
-        th { color: #a6adc8; font-size: 14px; }
-        td { font-size: 15px; }
-        
-        .student-report { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .report-card { background: #313244; padding: 20px; border-radius: 15px; }
+        /* 카드 그리드 스타일 (통일됨) */
+        .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .report-card { background: #313244; padding: 20px; border-radius: 15px; border: 1px solid #45475a; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 18px; color: var(--admin-accent); }
         .item-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .item { padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #1e1e2e; }
@@ -54,6 +49,10 @@
         .item-1 { background: #a6e3a1; }
         .item-2 { background: #f38ba8; }
         .item-3 { background: #89b4fa; }
+
+        /* 캡처 영역 */
+        #capture-area { background: #1e1e2e; padding: 20px; border-radius: 15px; }
+        #capture-header { display: none; text-align: center; margin-bottom: 20px; color: var(--text-white); }
 
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--admin-accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -65,7 +64,7 @@
     <h2>👨‍🏫 조창성T 관리자 모드</h2>
     <div id="login-screen">
         <input type="password" id="admin-pw" placeholder="관리자 비밀번호">
-        <button onclick="adminLogin()">접속하기</button>
+        <button onclick="adminLogin()">접속하기 (데이터 로딩)</button>
     </div>
 
     <div id="dashboard-screen">
@@ -73,46 +72,45 @@
             <button class="nav-btn active" onclick="switchTab('chapter')">📚 단원별 보기</button>
             <button class="nav-btn" onclick="switchTab('student')">🎓 학생별 보기</button>
         </div>
+        
         <div id="loader" class="loader"></div>
+        <div id="loading-msg" style="text-align:center; color:#a6adc8; display:none; margin-bottom:20px;">모든 데이터를 불러오고 있습니다...<br>(잠시만 기다려주세요)</div>
 
         <div class="controls">
-            <select id="main-select" onchange="loadData()">
+            <select id="main-select" onchange="renderView()">
                 <option value="">선택하세요...</option>
             </select>
             <div class="filter-group">
                 <button class="filter-btn active" id="btn-all" onclick="toggleFilter('all')">전체</button>
-                <button class="filter-btn active" id="btn-1" onclick="toggleFilter(1)"><span class="dot s-1" style="width:12px;height:12px;"></span> 맞음</button>
-                <button class="filter-btn active" id="btn-3" onclick="toggleFilter(3)"><span class="dot s-3" style="width:12px;height:12px;"></span> 고침</button>
-                <button class="filter-btn active" id="btn-2" onclick="toggleFilter(2)"><span class="dot s-2" style="width:12px;height:12px;"></span> 틀림</button>
-                <button class="filter-btn active" id="btn-0" onclick="toggleFilter(0)"><span class="dot s-0" style="width:12px;height:12px;"></span> 안품</button>
+                <button class="filter-btn active" id="btn-1" onclick="toggleFilter(1)"><span class="dot s-1"></span> 맞음</button>
+                <button class="filter-btn active" id="btn-3" onclick="toggleFilter(3)"><span class="dot s-3"></span> 고침</button>
+                <button class="filter-btn active" id="btn-2" onclick="toggleFilter(2)"><span class="dot s-2"></span> 틀림</button>
+                <button class="filter-btn active" id="btn-0" onclick="toggleFilter(0)"><span class="dot s-0"></span> 안품</button>
             </div>
+            <button id="btn-capture" class="btn-capture" onclick="captureReport()">📸 캡처 저장</button>
         </div>
 
-        <div id="view-chapter" class="view-section">
-            <div class="data-table-wrapper">
-                <table id="chapter-table">
-                    <thead><tr><th>학생명</th><th>진도율</th><th>문항 현황</th></tr></thead>
-                    <tbody></tbody>
-                </table>
+        <div id="view-area">
+             <div id="capture-area">
+                <div id="capture-header">
+                    <h3 style="margin:0; color:#7d5fff;">📊 조창성T 수학 과제 분석 리포트</h3>
+                    <p style="margin:5px 0; color:#a6adc8;" id="capture-title">분석 리포트</p>
+                    <hr style="border:0; border-top:1px solid #45475a; margin:15px 0;">
+                </div>
+                <div id="report-container" class="report-grid"></div>
             </div>
-        </div>
-
-        <div id="view-student" class="view-section" style="display:none;">
-            <div id="student-report-container" class="student-report"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // ★★★ 선생님 URL 확인 ★★★
+    // ★★★ 선생님 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec";
     const ADMIN_PW = "0602"; 
 
-    let allChapters = [];
-    let allStudents = [];
-    let currentMode = 'chapter'; // chapter or student
-    
-    // [핵심] 다중 필터 배열 (기본값: 모두 선택)
+    // ★ [핵심] 로컬 데이터 저장소
+    let globalDB = { sheets: {}, students: [] };
+    let currentMode = 'chapter'; 
     let activeFilters = [0, 1, 2, 3]; 
 
     function adminLogin() {
@@ -126,37 +124,50 @@
 
     function initAdmin() {
         document.getElementById('loader').style.display = 'block';
-        fetch(GOOGLE_SCRIPT_URL + "?action=getAdminMeta")
+        document.getElementById('loading-msg').style.display = 'block';
+        
+        // ★ [핵심] 한 번에 다 가져오기
+        fetch(GOOGLE_SCRIPT_URL + "?action=getAllData")
         .then(res => res.json())
         .then(data => {
             document.getElementById('loader').style.display = 'none';
-            allChapters = data.chapters;
-            allStudents = data.students;
+            document.getElementById('loading-msg').style.display = 'none';
+            globalDB = data; // 데이터 캐싱 완료
             updateSelectOptions();
+        })
+        .catch(err => {
+            alert("데이터 로딩 실패: " + err);
+            location.reload();
         });
     }
 
     function switchTab(tab) {
         currentMode = tab;
-        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         
         if(tab === 'chapter') {
-            document.getElementById('view-chapter').style.display = 'block';
             document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
         } else {
-            document.getElementById('view-student').style.display = 'block';
             document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
         }
+        
+        // 탭 바꿀 때 셀렉트 박스 리셋 및 옵션 변경
+        document.getElementById('main-select').value = "";
+        document.getElementById('report-container').innerHTML = "";
         updateSelectOptions();
-        document.querySelector('#chapter-table tbody').innerHTML = "";
-        document.getElementById('student-report-container').innerHTML = "";
     }
 
     function updateSelectOptions() {
         const select = document.getElementById('main-select');
         select.innerHTML = '<option value="">선택하세요...</option>';
-        let list = currentMode === 'chapter' ? allChapters : allStudents;
+        
+        let list = [];
+        if (currentMode === 'chapter') {
+            list = Object.keys(globalDB.sheets); // 단원 목록
+        } else {
+            list = globalDB.students; // 학생 목록
+        }
+        
         list.forEach(item => {
             let opt = document.createElement('option');
             opt.value = item; opt.innerText = item;
@@ -164,140 +175,115 @@
         });
     }
 
-    // [핵심] 필터 토글 로직
     function toggleFilter(val) {
-        if (val === 'all') {
-            // 전체 선택
-            activeFilters = [0, 1, 2, 3];
-        } else {
-            // 개별 토글
-            if (activeFilters.includes(val)) {
-                activeFilters = activeFilters.filter(v => v !== val);
-            } else {
-                activeFilters.push(val);
-            }
+        if (val === 'all') { activeFilters = [0, 1, 2, 3]; } 
+        else {
+            if (activeFilters.includes(val)) activeFilters = activeFilters.filter(v => v !== val);
+            else activeFilters.push(val);
         }
         updateFilterUI();
-        loadData(); // 필터 변경 시 현재 데이터 다시 로드 (재렌더링)
+        renderView(); // ★ 서버 요청 없이 즉시 렌더링
     }
 
     function updateFilterUI() {
-        // 모든 버튼 비활성화 먼저 하고
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        
-        // activeFilters에 있는 애들만 활성화
         activeFilters.forEach(val => {
             const btn = document.getElementById('btn-' + val);
             if(btn) btn.classList.add('active');
         });
-
-        // 4개가 다 켜져 있으면 '전체' 버튼도 켜기
         if ([0, 1, 2, 3].every(v => activeFilters.includes(v))) {
             document.getElementById('btn-all').classList.add('active');
         }
     }
 
-    // 로컬 데이터 캐싱용
-    let currentData = null;
-
-    function loadData() {
+    // ★ [핵심] 통합 렌더링 함수 (로컬 데이터 사용)
+    function renderView() {
         const value = document.getElementById('main-select').value;
+        const container = document.getElementById('report-container');
+        container.innerHTML = "";
+        
         if(!value) return;
-        
-        // 이미 데이터를 불러왔고 필터만 바꾸는 경우 서버 요청 스킵 (최적화)
-        // 하지만 여기선 간단하게 구현하기 위해 매번 요청하거나, 변수에 저장해두고 씀.
-        // 여기선 렌더링 함수만 다시 부르도록 수정.
-        
-        // 1. 셀렉트 박스 바뀌었을 때만 로딩
-        // (이 부분은 간단하게 구현하기 위해 그냥 항상 로딩하도록 둡니다. 나중에 최적화 가능)
-        document.getElementById('loader').style.display = 'block';
-        
-        if(currentMode === 'chapter') {
-            fetch(GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(value))
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('loader').style.display = 'none';
-                renderChapterTable(data);
+
+        // 캡처용 제목 설정
+        const titleText = currentMode === 'chapter' ? `${value} - 전체 학생 분석` : `${value} 학생 - 과제 분석 리포트`;
+        document.getElementById('capture-title').innerText = titleText;
+
+        if (currentMode === 'chapter') {
+            // [단원별 보기] -> 해당 단원의 모든 학생 카드 생성
+            const sheetData = globalDB.sheets[value];
+            if (!sheetData) return;
+
+            sheetData.forEach(student => {
+                const card = createCard(student['이름'], student);
+                if (card) container.innerHTML += card;
             });
+
         } else {
-            fetch(GOOGLE_SCRIPT_URL + "?action=getStudentAllData&name=" + encodeURIComponent(value))
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('loader').style.display = 'none';
-                renderStudentReport(data);
+            // [학생별 보기] -> 해당 학생의 모든 단원 카드 생성
+            const studentName = value;
+            const sheetNames = Object.keys(globalDB.sheets);
+
+            sheetNames.forEach(sheetName => {
+                const sheetData = globalDB.sheets[sheetName];
+                const studentData = sheetData.find(row => row['이름'] === studentName);
+                if (studentData) {
+                    const card = createCard(sheetName, studentData);
+                    if (card) container.innerHTML += card;
+                }
             });
         }
-    }
 
-    function renderChapterTable(data) {
-        const tbody = document.querySelector('#chapter-table tbody');
-        tbody.innerHTML = "";
-        if(data.length === 0) return;
-        
-        const keys = Object.keys(data[0]).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
-        
-        data.forEach(student => {
-            let total = 0, done = 0;
-            let statusHTML = "";
-            let hasVisibleItems = false; 
-
-            keys.forEach(key => {
-                let val = parseInt(student[key]) || 0;
-                total++;
-                if(val === 1 || val === 3) done++;
-                
-                // [수정] 다중 필터 체크: activeFilters 배열에 val이 있는지 확인
-                if(activeFilters.includes(val)) {
-                    let symbol = val === 0 ? "·" : (val === 1 ? "O" : (val === 2 ? "X" : "V"));
-                    statusHTML += `<span class="dot s-${val}" title="${key}번">${symbol}</span> `;
-                    hasVisibleItems = true;
-                }
-            });
-
-            let percent = total === 0 ? 0 : Math.round((done/total)*100);
-            let tr = document.createElement('tr');
-            tr.innerHTML = `<td style="font-weight:bold;">${student['이름']}</td><td>${percent}%</td><td style="text-align:left;">${statusHTML}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function renderStudentReport(data) {
-        const container = document.getElementById('student-report-container');
-        container.innerHTML = "";
-
-        data.forEach(chap => {
-            let scores = chap.scores;
-            let keys = Object.keys(scores);
-            let total = keys.length;
-            let correct = 0;
-            let filteredItems = [];
-
-            keys.forEach(k => {
-                let val = scores[k];
-                if(val === 1 || val === 3) correct++;
-                
-                // [수정] 다중 필터 체크
-                if(activeFilters.includes(val)) {
-                    filteredItems.push({ num: k, val: val });
-                }
-            });
-
-            if(filteredItems.length === 0) return; // 필터된게 하나도 없으면 카드 숨김
-
-            let percent = total === 0 ? 0 : Math.round((correct/total)*100);
-            
-            let html = `
-                <div class="report-card">
-                    <div class="card-header"><span>${chap.name}</span><span>${percent}%</span></div>
-                    <div class="item-list">
-                        ${filteredItems.map(item => `<span class="item item-${item.val}">${item.num}</span>`).join('')}
-                    </div>
-                </div>
-            `;
-            container.innerHTML += html;
-        });
-        
         if(container.innerHTML === "") container.innerHTML = "<p style='text-align:center; width:100%; color:#a6adc8;'>해당 조건의 문항이 없습니다.</p>";
+    }
+
+    // 카드 HTML 생성 헬퍼 함수 (단원별/학생별 공통 사용)
+    function createCard(title, dataObj) {
+        // 문제 컬럼만 필터링 (이름, 비번 등 제외)
+        const keys = Object.keys(dataObj).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
+        
+        let total = keys.length;
+        let correct = 0;
+        let filteredItems = [];
+
+        keys.forEach(k => {
+            let val = parseInt(dataObj[k]) || 0;
+            if(val === 1 || val === 3) correct++;
+            
+            // 필터링 적용
+            if(activeFilters.includes(val)) {
+                filteredItems.push({ num: k, val: val });
+            }
+        });
+
+        // 필터링 결과가 하나도 없으면 카드 자체를 안 그림 (옵션)
+        if (filteredItems.length === 0) return null;
+
+        let percent = total === 0 ? 0 : Math.round((correct/total)*100);
+
+        return `
+            <div class="report-card">
+                <div class="card-header"><span>${title}</span><span>${percent}%</span></div>
+                <div class="item-list">
+                    ${filteredItems.map(item => `<span class="item item-${item.val}">${item.num}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function captureReport() {
+        const captureArea = document.getElementById('capture-area');
+        const header = document.getElementById('capture-header');
+        
+        if(!document.getElementById('main-select').value) { alert("대상을 선택해주세요!"); return; }
+
+        header.style.display = 'block';
+        html2canvas(captureArea, { backgroundColor: "#1e1e2e", scale: 2 }).then(canvas => {
+            header.style.display = 'none';
+            const link = document.createElement('a');
+            link.download = document.getElementById('main-select').value + '_분석리포트.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
     }
 </script>
 </body>
