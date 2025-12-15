@@ -11,68 +11,54 @@
         body { font-family: "Pretendard Variable", sans-serif; background-color: var(--admin-dark); color: var(--text-white); margin: 0; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
         h2 { text-align: center; margin-bottom: 30px; color: var(--admin-accent); }
-        
         #login-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; }
         input { padding: 15px; border-radius: 10px; border: none; width: 250px; margin-bottom: 10px; font-size: 16px; }
         button { padding: 15px 30px; border-radius: 10px; border: none; background: var(--admin-accent); color: white; font-weight: bold; cursor: pointer; font-size: 16px; }
         button:hover { opacity: 0.9; }
-
         #dashboard-screen { display: none; }
         .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .nav-btn { flex: 1; padding: 15px; background: #313244; color: #a6adc8; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; }
         .nav-btn.active { background: var(--admin-accent); color: white; font-weight: bold; }
-
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         select { padding: 12px; border-radius: 8px; border: none; font-size: 16px; flex: 1; min-width: 150px; }
         
         .btn-capture { background-color: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         .btn-capture:hover { background-color: #27ae60; }
+        
+        /* 피드백 복사 버튼 스타일 */
+        .btn-feedback { background-color: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-feedback:hover { background-color: #d35400; }
 
         .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid #585b70; background: transparent; color: #cdd6f4; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
         .filter-btn.active { background: white; color: var(--admin-dark); border-color: white; font-weight: bold; }
         .filter-btn.active .dot { border: 1px solid rgba(0,0,0,0.1); }
-
         .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
-        .s-0 { background: #585b70; } 
-        .s-1 { background: #a6e3a1; } 
-        .s-2 { background: #f38ba8; } 
-        .s-3 { background: #89b4fa; } 
-
-        /* 카드 그리드 스타일 (통일됨) */
+        .s-0 { background: #585b70; } .s-1 { background: #a6e3a1; } .s-2 { background: #f38ba8; } .s-3 { background: #89b4fa; } 
         .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .report-card { background: #313244; padding: 20px; border-radius: 15px; border: 1px solid #45475a; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 18px; color: var(--admin-accent); }
         .item-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .item { padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #1e1e2e; }
-        .item-0 { background: #585b70; color: white; }
-        .item-1 { background: #a6e3a1; }
-        .item-2 { background: #f38ba8; }
-        .item-3 { background: #89b4fa; }
-
-        /* 캡처 영역 */
+        .item-0 { background: #585b70; color: white; } .item-1 { background: #a6e3a1; } .item-2 { background: #f38ba8; } .item-3 { background: #89b4fa; }
         #capture-area { background: #1e1e2e; padding: 20px; border-radius: 15px; }
         #capture-header { display: none; text-align: center; margin-bottom: 20px; color: var(--text-white); }
-
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--admin-accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-
 <div class="container">
     <h2>👨‍🏫 조창성T 관리자 모드</h2>
     <div id="login-screen">
         <input type="password" id="admin-pw" placeholder="관리자 비밀번호">
         <button onclick="adminLogin()">접속하기 (데이터 로딩)</button>
     </div>
-
     <div id="dashboard-screen">
         <div class="nav-tabs">
             <button class="nav-btn active" onclick="switchTab('chapter')">📚 단원별 보기</button>
             <button class="nav-btn" onclick="switchTab('student')">🎓 학생별 보기</button>
         </div>
-        
         <div id="loader" class="loader"></div>
         <div id="loading-msg" style="text-align:center; color:#a6adc8; display:none; margin-bottom:20px;">모든 데이터를 불러오고 있습니다...<br>(잠시만 기다려주세요)</div>
 
@@ -87,7 +73,8 @@
                 <button class="filter-btn active" id="btn-2" onclick="toggleFilter(2)"><span class="dot s-2"></span> 틀림</button>
                 <button class="filter-btn active" id="btn-0" onclick="toggleFilter(0)"><span class="dot s-0"></span> 안품</button>
             </div>
-            <button id="btn-capture" class="btn-capture" onclick="captureReport()">📸 캡처 저장</button>
+            <button id="btn-capture" class="btn-capture" style="display:none;" onclick="captureReport()">📸 캡처 저장</button>
+            <button id="btn-feedback" class="btn-feedback" style="display:none;" onclick="generateFeedback()">📝 피드백 복사</button>
         </div>
 
         <div id="view-area">
@@ -104,11 +91,8 @@
 </div>
 
 <script>
-    // ★★★ 선생님 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec";
     const ADMIN_PW = "0602"; 
-
-    // ★ [핵심] 로컬 데이터 저장소
     let globalDB = { sheets: {}, students: [] };
     let currentMode = 'chapter'; 
     let activeFilters = [0, 1, 2, 3]; 
@@ -121,161 +105,93 @@
             initAdmin();
         } else { alert("비밀번호가 틀렸습니다."); }
     }
-
     function initAdmin() {
         document.getElementById('loader').style.display = 'block';
         document.getElementById('loading-msg').style.display = 'block';
-        
-        // ★ [핵심] 한 번에 다 가져오기
-        fetch(GOOGLE_SCRIPT_URL + "?action=getAllData")
-        .then(res => res.json())
-        .then(data => {
+        fetch(GOOGLE_SCRIPT_URL + "?action=getAllData").then(res => res.json()).then(data => {
             document.getElementById('loader').style.display = 'none';
             document.getElementById('loading-msg').style.display = 'none';
-            globalDB = data; // 데이터 캐싱 완료
-            updateSelectOptions();
-        })
-        .catch(err => {
-            alert("데이터 로딩 실패: " + err);
-            location.reload();
-        });
+            globalDB = data; updateSelectOptions();
+        }).catch(err => { alert("데이터 로딩 실패: " + err); location.reload(); });
     }
-
     function switchTab(tab) {
         currentMode = tab;
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        
+        const captureBtn = document.getElementById('btn-capture');
+        const feedbackBtn = document.getElementById('btn-feedback');
         if(tab === 'chapter') {
             document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+            captureBtn.style.display = 'none'; feedbackBtn.style.display = 'none';
         } else {
             document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+            captureBtn.style.display = 'flex'; feedbackBtn.style.display = 'flex';
         }
-        
-        // 탭 바꿀 때 셀렉트 박스 리셋 및 옵션 변경
         document.getElementById('main-select').value = "";
         document.getElementById('report-container').innerHTML = "";
         updateSelectOptions();
     }
-
     function updateSelectOptions() {
         const select = document.getElementById('main-select');
         select.innerHTML = '<option value="">선택하세요...</option>';
-        
-        let list = [];
-        if (currentMode === 'chapter') {
-            list = Object.keys(globalDB.sheets); // 단원 목록
-        } else {
-            list = globalDB.students; // 학생 목록
-        }
-        
+        let list = currentMode === 'chapter' ? Object.keys(globalDB.sheets) : globalDB.students;
         list.forEach(item => {
             let opt = document.createElement('option');
             opt.value = item; opt.innerText = item;
             select.appendChild(opt);
         });
     }
-
     function toggleFilter(val) {
         if (val === 'all') { activeFilters = [0, 1, 2, 3]; } 
         else {
             if (activeFilters.includes(val)) activeFilters = activeFilters.filter(v => v !== val);
             else activeFilters.push(val);
         }
-        updateFilterUI();
-        renderView(); // ★ 서버 요청 없이 즉시 렌더링
+        updateFilterUI(); renderView();
     }
-
     function updateFilterUI() {
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        activeFilters.forEach(val => {
-            const btn = document.getElementById('btn-' + val);
-            if(btn) btn.classList.add('active');
-        });
-        if ([0, 1, 2, 3].every(v => activeFilters.includes(v))) {
-            document.getElementById('btn-all').classList.add('active');
-        }
+        activeFilters.forEach(val => { const btn = document.getElementById('btn-' + val); if(btn) btn.classList.add('active'); });
+        if ([0, 1, 2, 3].every(v => activeFilters.includes(v))) { document.getElementById('btn-all').classList.add('active'); }
     }
-
-    // ★ [핵심] 통합 렌더링 함수 (로컬 데이터 사용)
     function renderView() {
         const value = document.getElementById('main-select').value;
         const container = document.getElementById('report-container');
         container.innerHTML = "";
-        
         if(!value) return;
-
-        // 캡처용 제목 설정
         const titleText = currentMode === 'chapter' ? `${value} - 전체 학생 분석` : `${value} 학생 - 과제 분석 리포트`;
         document.getElementById('capture-title').innerText = titleText;
 
         if (currentMode === 'chapter') {
-            // [단원별 보기] -> 해당 단원의 모든 학생 카드 생성
             const sheetData = globalDB.sheets[value];
             if (!sheetData) return;
-
-            sheetData.forEach(student => {
-                const card = createCard(student['이름'], student);
-                if (card) container.innerHTML += card;
-            });
-
+            sheetData.forEach(student => { const card = createCard(student['이름'], student); if (card) container.innerHTML += card; });
         } else {
-            // [학생별 보기] -> 해당 학생의 모든 단원 카드 생성
             const studentName = value;
             const sheetNames = Object.keys(globalDB.sheets);
-
             sheetNames.forEach(sheetName => {
                 const sheetData = globalDB.sheets[sheetName];
                 const studentData = sheetData.find(row => row['이름'] === studentName);
-                if (studentData) {
-                    const card = createCard(sheetName, studentData);
-                    if (card) container.innerHTML += card;
-                }
+                if (studentData) { const card = createCard(sheetName, studentData); if (card) container.innerHTML += card; }
             });
         }
-
         if(container.innerHTML === "") container.innerHTML = "<p style='text-align:center; width:100%; color:#a6adc8;'>해당 조건의 문항이 없습니다.</p>";
     }
-
-    // 카드 HTML 생성 헬퍼 함수 (단원별/학생별 공통 사용)
     function createCard(title, dataObj) {
-        // 문제 컬럼만 필터링 (이름, 비번 등 제외)
         const keys = Object.keys(dataObj).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
-        
-        let total = keys.length;
-        let correct = 0;
-        let filteredItems = [];
-
+        let total = keys.length; let correct = 0; let filteredItems = [];
         keys.forEach(k => {
             let val = parseInt(dataObj[k]) || 0;
             if(val === 1 || val === 3) correct++;
-            
-            // 필터링 적용
-            if(activeFilters.includes(val)) {
-                filteredItems.push({ num: k, val: val });
-            }
+            if(activeFilters.includes(val)) { filteredItems.push({ num: k, val: val }); }
         });
-
-        // 필터링 결과가 하나도 없으면 카드 자체를 안 그림 (옵션)
         if (filteredItems.length === 0) return null;
-
         let percent = total === 0 ? 0 : Math.round((correct/total)*100);
-
-        return `
-            <div class="report-card">
-                <div class="card-header"><span>${title}</span><span>${percent}%</span></div>
-                <div class="item-list">
-                    ${filteredItems.map(item => `<span class="item item-${item.val}">${item.num}</span>`).join('')}
-                </div>
-            </div>
-        `;
+        return `<div class="report-card"><div class="card-header"><span>${title}</span><span>${percent}%</span></div><div class="item-list">${filteredItems.map(item => `<span class="item item-${item.val}">${item.num}</span>`).join('')}</div></div>`;
     }
-
     function captureReport() {
         const captureArea = document.getElementById('capture-area');
         const header = document.getElementById('capture-header');
-        
         if(!document.getElementById('main-select').value) { alert("대상을 선택해주세요!"); return; }
-
         header.style.display = 'block';
         html2canvas(captureArea, { backgroundColor: "#1e1e2e", scale: 2 }).then(canvas => {
             header.style.display = 'none';
@@ -283,6 +199,81 @@
             link.download = document.getElementById('main-select').value + '_분석리포트.png';
             link.href = canvas.toDataURL();
             link.click();
+        });
+    }
+
+    // ★★★ 피드백 생성 기능 ★★★
+    function generateFeedback() {
+        const name = document.getElementById('main-select').value;
+        if(!name) { alert("학생을 선택해주세요."); return; }
+        
+        // 가장 최근 단원 데이터 가져오기 (마지막 시트 기준)
+        const sheetNames = Object.keys(globalDB.sheets);
+        const lastSheetName = sheetNames[sheetNames.length - 1]; // 제일 마지막 시트가 최신이라고 가정
+        const sheetData = globalDB.sheets[lastSheetName];
+        const studentData = sheetData.find(row => row['이름'] === name);
+        
+        if(!studentData) { alert("데이터가 없습니다."); return; }
+
+        // 통계 계산
+        const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
+        let total = keys.length;
+        let correct = 0;
+        let done = 0; // 푼 문제 (1,2,3)
+        let wrongList = [];
+        
+        keys.forEach(k => {
+            let val = parseInt(studentData[k]) || 0;
+            if(val !== 0) done++;
+            if(val === 1 || val === 3) correct++;
+            if(val === 2) wrongList.push(k);
+        });
+
+        let percent = total === 0 ? 0 : Math.round((correct/total)*100);
+        let progress = total === 0 ? 0 : Math.round((done/total)*100);
+
+        // 등급 아이콘
+        let tierIcon = "🛡️";
+        if(percent >= 90) tierIcon = "💎";
+        else if(percent >= 70) tierIcon = "💠";
+        else if(percent >= 50) tierIcon = "🥇";
+
+        let feedback = `[조창성T 수학 과제 리포트]\n\n`;
+        feedback += `📌 학생: ${name}\n`;
+        feedback += `📚 단원: ${lastSheetName}\n`;
+        
+        // CASE 1: 미제출 (진도율 20% 미만)
+        if (progress < 20) {
+            feedback += `⚠️ 결과: 미제출 (진도율 ${progress}%)\n\n`;
+            feedback += `📢 선생님 코멘트\n`;
+            feedback += `해당 단원의 과제 제출이 확인되지 않았습니다.\n`;
+            feedback += `과제가 밀리면 수업 이해도에 영향이 큽니다. 학생이 집에서 과제를 마무리할 수 있도록 가정에서도 지도 부탁드립니다.`;
+        } 
+        // CASE 2: 미흡 (정답률 50% 미만)
+        else if (percent < 50) {
+            feedback += `⚠️ 결과: 재학습 요망 (정답률 ${percent}%)\n\n`;
+            feedback += `📢 선생님 코멘트\n`;
+            feedback += `과제를 제출했으나, 개념 이해에 다소 어려움을 겪고 있습니다.\n`;
+            feedback += `단순 문제 풀이보다 개념 복습이 시급합니다. 수업 시간에 따로 확인하겠습니다. 격려 부탁드립니다.`;
+        } 
+        // CASE 3: 우수 (정상)
+        else {
+            feedback += `🏆 결과: ${tierIcon} 정답률 ${percent}% 달성\n\n`;
+            feedback += `📢 선생님 코멘트\n`;
+            feedback += `과제 수행도가 매우 우수합니다. `;
+            if(wrongList.length > 0) {
+                feedback += `틀린 문항(${wrongList.slice(0,3).join(', ')}번 등)은 오답 정리를 통해 완벽히 내 것으로 만들도록 지도하겠습니다.`;
+            } else {
+                feedback += `완벽하게 이해했습니다. 칭찬 부탁드립니다!`;
+            }
+        }
+
+        // 클립보드 복사
+        navigator.clipboard.writeText(feedback).then(() => {
+            alert("📝 피드백이 복사되었습니다!\n카톡방에 붙여넣기 하세요.");
+        }).catch(err => {
+            alert("복사 실패 (브라우저 보안 설정 확인 필요)");
+            console.error(err);
         });
     }
 </script>
