@@ -14,27 +14,33 @@
         button { font-family:inherit; transition:all 0.1s ease; cursor:pointer; } button:active { transform:scale(0.96); }
         button.primary, button.analyze { width:100%; padding:16px; border:none; border-radius:var(--radius-M); font-size:17px; font-weight:600; margin-top:12px; }
         button.primary { background-color:var(--toss-blue); color:white; } button.analyze { background-color:#E8F3FF; color:var(--toss-blue); }
-        input, select { width:100%; padding:16px; margin-bottom:12px; border:none; background-color:#F9FAFB; border-radius:var(--radius-M); font-size:17px; font-family:inherit; box-sizing:border-box; }
-        input:focus, select:focus { outline:2px solid var(--toss-blue); background:white; }
+        input, select, textarea { width:100%; padding:16px; margin-bottom:12px; border:none; background-color:#F9FAFB; border-radius:var(--radius-M); font-size:17px; font-family:inherit; box-sizing:border-box; }
+        input:focus, select:focus, textarea:focus { outline:2px solid var(--toss-blue); background:white; }
+        textarea { resize:none; height:100px; font-size:15px; }
+        textarea::placeholder { color: #ADB5BD; line-height: 1.5; }
         .screen { display:none; flex-direction:column; } .active { display:flex; }
-        
         .chapter-btn { display:flex; justify-content:space-between; align-items:center; width:100%; padding:18px 20px; background:white; border:1px solid #F2F4F6; border-radius:16px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.03); text-align:left; }
+        .chapter-btn:hover { background-color:#F9FAFB; }
+        .chap-name { font-size:17px; font-weight:600; color:#191F28; } .chap-stat { font-size:15px; font-weight:600; color:#6B7684; display:flex; align-items:center; gap:8px; } .stat-icon { font-size:20px; }
         .tier-badge { display:flex; flex-direction:column; align-items:center; justify-content:center; margin-bottom:24px; padding:24px 20px; border-radius:20px; background:white; border:2px solid #ddd; box-shadow:0 10px 30px rgba(0,0,0,0.05); transition:0.3s; }
-        .tier-row { display:flex; align-items:center; justify-content:center; margin-bottom:10px; } .tier-icon { font-size:40px; margin-right:10px; } .tier-name { font-size:26px; font-weight:800; text-transform:uppercase; }
+        .tier-row { display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+        .tier-icon { font-size:40px; margin-right:10px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .tier-name { font-size:26px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; }
         .rank-text { font-size:14px; font-weight:600; color:var(--toss-text-gray); background:#F2F4F6; padding:6px 14px; border-radius:20px; margin-bottom:15px; }
-        .tier-progress-bg { width:100%; height:8px; background:#F2F4F6; border-radius:4px; overflow:hidden; } .tier-progress-fill { height:100%; background:#ddd; width:0%; border-radius:4px; transition:width 0.5s ease; }
+        .tier-progress-bg { width:100%; height:8px; background:#F2F4F6; border-radius:4px; overflow:hidden; }
+        .tier-progress-fill { height:100%; background:#ddd; width:0%; border-radius:4px; transition:width 0.5s ease; }
         .tier-iron { border-color:#585858; color:#585858; } .tier-iron .tier-progress-fill { background:#585858; }
         .tier-bronze { border-color:#cd7f32; color:#cd7f32; } .tier-bronze .tier-progress-fill { background:#cd7f32; }
         .tier-silver { border-color:#7f8c8d; color:#7f8c8d; } .tier-silver .tier-progress-fill { background:#7f8c8d; }
         .tier-gold { border-color:#FFB300; color:#FFB300; } .tier-gold .tier-progress-fill { background:#FFB300; }
         .tier-platinum { border-color:#00b894; color:#00b894; } .tier-platinum .tier-progress-fill { background:#00b894; }
         .tier-diamond { border-color:#00CEC9; color:#00CEC9; } .tier-diamond .tier-progress-fill { background:#00CEC9; }
-        .tier-challenger { border:3px solid transparent; background-image:linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); background-origin:border-box; background-clip:content-box, border-box; } .tier-challenger .tier-progress-fill { background:linear-gradient(to right, #fbc2eb, #a6c1ee); } .tier-challenger .tier-name { background:linear-gradient(to right, #fbc2eb, #a6c1ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-
+        .tier-challenger { border:3px solid transparent; background-image:linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); background-origin:border-box; background-clip:content-box, border-box; }
+        .tier-challenger .tier-name { background:linear-gradient(to right, #fbc2eb, #a6c1ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .tier-challenger .tier-progress-fill { background:linear-gradient(to right, #fbc2eb, #a6c1ee); }
         .filter-options { display:flex; justify-content:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
         .filter-label { font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px; padding:8px 12px; background:#F9FAFB; border-radius:20px; color:var(--toss-text-gray); transition:0.2s; font-weight:500; }
         .filter-label:has(input:checked) { background-color:#E8F3FF; color:var(--toss-blue); font-weight:700; }
-        
         .grid-container { display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin-bottom:24px; }
         .grid-item { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color:white; border-radius:var(--radius-M); border:none; box-shadow:0 2px 8px rgba(0,0,0,0.05); transition:all 0.2s; }
         .grid-item.hidden { display:none; }
@@ -43,16 +49,6 @@
         .status-2 { background-color:#FFEBEB; color:#E31A1A; box-shadow:inset 0 0 0 2px #E31A1A; }
         .status-3 { background-color:#f0fff4; color:#218c74; box-shadow:inset 0 0 0 2px #218c74; background-image:repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(33, 140, 116, 0.1) 5px, rgba(33, 140, 116, 0.1) 10px); }
         .q-num { font-size:13px; font-weight:600; margin-bottom:4px; } .q-icon { font-size:24px; }
-        
-        /* 코멘트 박스 스타일 추가 */
-        textarea {
-            width: 100%; height: 100px; padding: 16px; margin-bottom: 12px; border: none;
-            background-color: #F9FAFB; border-radius: var(--radius-M);
-            font-size: 15px; font-family: inherit; box-sizing: border-box; resize: none;
-        }
-        textarea::placeholder { color: #ADB5BD; font-weight: 400; line-height: 1.5; }
-        textarea:focus { outline: 2px solid var(--toss-blue); background: white; }
-
         .loader-wrapper { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; display:none; justify-content:center; align-items:center; border-radius:var(--radius-L); }
         .loader { border:4px solid #f3f3f3; border-top:4px solid var(--toss-blue); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
@@ -99,17 +95,15 @@
         </div>
         <div class="grid-container" id="grid-box"></div>
         
-        <div style="margin-top:20px;">
-            <textarea id="student-comment" placeholder="선생님께 남기고 싶은 말&#10;예: 20번 오타있어요.&#10;예: 33번 답이 없어요."></textarea>
-            
-            <div style="text-align:center;">
-                <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom:8px;"></div>
-                <div style="display:flex; gap:10px;">
-                    <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
-                    <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
-                </div>
-                <button onclick="checkBackNavigation()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 목록으로</button>
+        <textarea id="student-comment" placeholder="선생님께 남기고 싶은 말&#10;예: 20번 오타있어요.&#10;예: 33번 답이 없어요."></textarea>
+
+        <div style="text-align:center; margin-top:10px;">
+            <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom:8px;"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
+                <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
             </div>
+            <button onclick="checkBackNavigation()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 목록으로</button>
         </div>
     </div>
 </div>
@@ -121,62 +115,53 @@
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playPopSound() {
-        if(audioCtx.state === 'suspended') audioCtx.resume();
-        const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-        osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-    }
+    function playPopSound() { if(audioCtx.state === 'suspended') audioCtx.resume(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
     function toggleLoader(show) { document.getElementById('global-loader').style.display = show ? 'flex' : 'none'; }
     window.addEventListener('popstate', function(event) { if (document.getElementById('screen-game').classList.contains('active')) { checkBackNavigation(); } });
     function checkBackNavigation() { if (Object.keys(tempChanges).length > 0) { history.pushState({page: 'game'}, document.title, "#game"); document.getElementById('exit-modal').style.display = 'flex'; } else { exitWithoutSave(); } }
     function saveAndExit() { document.getElementById('exit-modal').style.display = 'none'; saveData(true); }
     function exitWithoutSave() { document.getElementById('exit-modal').style.display = 'none'; tempChanges = {}; currentSheetName = ""; showScreen('screen-chapter'); filterChapters(); history.replaceState(null, null, ' '); }
 
-    let userCredentials = { name: "", pw: "" };
-    let currentSheetName = ""; let currentUserRowIndex = -1; let tempChanges = {}; let allChapters = []; let myChart = null; let currentClassData = [];
+    let userCredentials = { name: "", pw: "" }; let currentSheetName = ""; let currentUserRowIndex = -1; let tempChanges = {}; let allChapters = []; let myChart = null; let currentClassData = [];
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
     const TIER_ICONS = { "CHALLENGER": "👑", "DIAMOND": "💎", "PLATINUM": "💠", "GOLD": "🥇", "SILVER": "🥈", "BRONZE": "🥉", "IRON": "🛡️" };
 
-    function goToChapterSelect() {
-        const name = document.getElementById('input-name').value.trim(); const pw = document.getElementById('input-pw').value.trim();
-        if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; }
-        userCredentials.name = name; userCredentials.pw = pw; toggleLoader(true);
-        fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw)).then(async (res) => { if (!res.ok) throw new Error("서버 연결 실패"); return res.json(); }).then(data => { toggleLoader(false); if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } allChapters = data; showScreen('screen-chapter'); setupClassFilter(data); filterChapters(); }).catch(err => { toggleLoader(false); alert("오류: " + err.message); });
-    }
+    function goToChapterSelect() { const name = document.getElementById('input-name').value.trim(); const pw = document.getElementById('input-pw').value.trim(); if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; } userCredentials.name = name; userCredentials.pw = pw; toggleLoader(true); fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw)).then(async (res) => { if (!res.ok) throw new Error("서버 연결 실패"); return res.json(); }).then(data => { toggleLoader(false); if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } allChapters = data; showScreen('screen-chapter'); setupClassFilter(data); filterChapters(); }).catch(err => { toggleLoader(false); alert("오류: " + err.message); }); }
     function setupClassFilter(chapters) { const filter = document.getElementById('class-filter'); filter.innerHTML = '<option value="all">전체 수업 보기</option>'; const classes = new Set(); chapters.forEach(chap => { const match = chap.name.match(/^\[(.*?)\]/); if (match) classes.add(match[0]); }); classes.forEach(cls => { const option = document.createElement('option'); option.value = cls; option.innerText = cls.replace(/[\[\]]/g, "") + " 수업"; filter.appendChild(option); }); }
     function filterChapters() { const selectedClass = document.getElementById('class-filter').value; const list = document.getElementById('chapter-list'); list.innerHTML = ""; allChapters.forEach(chap => { if (selectedClass === "all" || chap.name.startsWith(selectedClass)) { const btn = document.createElement('button'); btn.className = 'chapter-btn'; const safeTier = chap.tier || "IRON"; const safePercent = chap.percent || 0; const tierIcon = TIER_ICONS[safeTier] || "🛡️"; btn.innerHTML = `<span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span><span class="chap-stat">${safePercent}% <span class="stat-icon">${tierIcon}</span></span>`; btn.onclick = () => loadGame(chap.name); list.appendChild(btn); } }); }
     function loadGame(sheetName) { currentSheetName = sheetName; history.pushState({page: 'game'}, document.title, "#game"); toggleLoader(true); const timestamp = new Date().getTime(); const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; fetch(requestUrl).then(res => res.json()).then(data => { toggleLoader(false); currentClassData = data; const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (user) { currentUserRowIndex = user['rowIndex']; showScreen('screen-game'); document.getElementById('game-title').innerText = `${sheetName} - ${user['이름']}`; renderGrid(user); updateChart(user); updateTier(user); document.getElementById('student-comment').value = ""; } else { alert("학생 정보 없음"); history.back(); } }).catch(err => { toggleLoader(false); alert("로딩 실패: " + err.message); }); }
-    function renderGrid(userData) { const gridBox = document.getElementById('grid-box'); gridBox.innerHTML = ""; tempChanges = {}; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; const div = document.createElement('button'); div.className = `grid-item ${CLASS_NAMES[val]}`; div.dataset.val = val; div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`; div.onclick = function() { playPopSound(); let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val; let nextVal = (current + 1) % 4; div.className = `grid-item ${CLASS_NAMES[nextVal]}`; div.dataset.val = nextVal; div.querySelector('.q-icon').innerText = ICONS[nextVal]; tempChanges[key] = nextVal; let previewData = {...userData, ...tempChanges}; updateChart(previewData); updateTier(previewData); applyViewFilter(); }; gridBox.appendChild(div); }); applyViewFilter(); }
+    function renderGrid(userData) { const gridBox = document.getElementById('grid-box'); gridBox.innerHTML = ""; tempChanges = {}; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; const div = document.createElement('button'); div.className = `grid-item ${CLASS_NAMES[val]}`; div.dataset.val = val; div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`; div.onclick = function() { playPopSound(); let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val; let nextVal = (current + 1) % 4; div.className = `grid-item ${CLASS_NAMES[nextVal]}`; div.dataset.val = nextVal; div.querySelector('.q-icon').innerText = ICONS[nextVal]; tempChanges[key] = nextVal; let previewData = {...userData, ...tempChanges}; updateChart(previewData); updateTier(previewData); applyViewFilter(); }; gridBox.appendChild(div); }); applyViewFilter(); }
     function applyViewFilter() { const checkboxes = document.querySelectorAll('.filter-options input'); const checkedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)); const items = document.querySelectorAll('.grid-item'); items.forEach(item => { const val = parseInt(item.dataset.val); if (checkedValues.includes(val)) { item.classList.remove('hidden'); } else { item.classList.add('hidden'); } }); }
-    function getRank(myData, allData) { const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); if (keys.length === 0) return "-"; let scores = allData.map(student => { let score = 0; keys.forEach(k => { let val = parseInt(student[k]) || 0; if (val === 1 || val === 3) score++; }); return { name: student['이름'], score: score }; }); let myScore = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; if (val === 1 || val === 3) myScore++; }); let myEntryIndex = scores.findIndex(s => s.name === myData['이름']); if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore; scores.sort((a, b) => b.score - a.score); let rank = scores.findIndex(s => s.name === myData['이름']) + 1; return `${rank}위 / ${scores.length}명`; }
+    function getRank(myData, allData) { const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); if (keys.length === 0) return "-"; let scores = allData.map(student => { let score = 0; keys.forEach(k => { let val = parseInt(student[k]) || 0; if (val === 1 || val === 3) score++; }); return { name: student['이름'], score: score }; }); let myScore = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; if (val === 1 || val === 3) myScore++; }); let myEntryIndex = scores.findIndex(s => s.name === myData['이름']); if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore; scores.sort((a, b) => b.score - a.score); let rank = scores.findIndex(s => s.name === myData['이름']) + 1; return `${rank}위 / ${scores.length}명`; }
     function getTierName(percent) { if (percent === 100) return "CHALLENGER"; if (percent >= 90) return "DIAMOND"; if (percent >= 70) return "PLATINUM"; if (percent >= 50) return "GOLD"; if (percent >= 30) return "SILVER"; if (percent >= 10) return "BRONZE"; return "IRON"; }
-    function updateTier(userData) { const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); let total = keys.length; let done = 0; keys.forEach(k => { let val = parseInt(userData[k]) || 0; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : (done / total) * 100; let badge = document.getElementById('tier-badge'); let tierName = getTierName(percent); let tierIcon = TIER_ICONS[tierName] || "🛡️"; let rankText = getRank(userData, currentClassData); badge.className = `tier-badge tier-${tierName.toLowerCase()}`; badge.innerHTML = `<div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span class="tier-name">${tierName}</span></div><div class="rank-text">현재 순위 : ${rankText}</div><div class="tier-progress-bg"><div class="tier-progress-fill" style="width:${percent}%"></div></div>`; }
+    function updateTier(userData) { const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); let total = keys.length; let done = 0; keys.forEach(k => { let val = parseInt(userData[k]) || 0; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : (done / total) * 100; let badge = document.getElementById('tier-badge'); let tierName = getTierName(percent); let tierIcon = TIER_ICONS[tierName] || "🛡️"; let rankText = getRank(userData, currentClassData); badge.className = `tier-badge tier-${tierName.toLowerCase()}`; badge.innerHTML = `<div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span class="tier-name">${tierName}</span></div><div class="rank-text">현재 순위 : ${rankText}</div><div class="tier-progress-bg"><div class="tier-progress-fill" style="width:${percent}%"></div></div>`; }
     function getPattern() { const patternCanvas = document.createElement('canvas'); const pCtx = patternCanvas.getContext('2d'); patternCanvas.width = 10; patternCanvas.height = 10; pCtx.fillStyle = '#E8F5E9'; pCtx.fillRect(0,0,10,10); pCtx.strokeStyle = '#218c74'; pCtx.lineWidth = 2; pCtx.beginPath(); pCtx.moveTo(0, 10); pCtx.lineTo(10, 0); pCtx.stroke(); return pCtx.createPattern(patternCanvas, 'repeat'); }
     const centerTextPlugin = { id: 'centerText', beforeDraw: function(chart) { if (chart.config.type !== 'doughnut') return; var width = chart.width, height = chart.height, ctx = chart.ctx; ctx.restore(); let data = chart.data.datasets[0].data; let total = data.reduce((a, b) => a + b, 0); let score = data[1] + data[3]; let percent = total === 0 ? 0 : Math.round((score / total) * 100); var fontSize = (height / 114).toFixed(2); ctx.font = "bold " + fontSize + "em Pretendard"; ctx.textBaseline = "middle"; ctx.fillStyle = "#191F28"; var text = percent + "%", textX = Math.round((width - ctx.measureText(text).width) / 2), textY = height / 2; ctx.fillText(text, textX, textY); ctx.save(); } }; Chart.register(centerTextPlugin);
-    function updateChart(userData) { const ctx = document.getElementById('progressChart').getContext('2d'); let counts = [0, 0, 0, 0]; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; counts[val]++; }); if (myChart) myChart.destroy(); const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern()]; myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['안품', '맞음', '틀림', '고침'], datasets: [{ data: counts, backgroundColor: bgColors, borderWidth: 2, borderColor: 'white', borderRadius: 20, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } } }); }
-    function analyzePerformance() { if (!currentClassData || currentClassData.length === 0) return; let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); let myStatus = {...myData, ...tempChanges}; let questionStats = {}; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); let participatedCount = 0; keys.forEach(key => { let correctCount = 0; let totalStudents = 0; currentClassData.forEach(student => { let val = parseInt(student[key]) || 0; if (val === 1) correctCount++; totalStudents++; }); let count1 = currentClassData.filter(s => parseInt(s[key]) === 1).length; questionStats[key] = totalStudents === 0 ? 0 : (count1 / totalStudents) * 100; }); participatedCount = 0; currentClassData.forEach(s => { if(keys.some(k => parseInt(s[k]) > 0)) participatedCount++; }); let participationRate = participatedCount / currentClassData.length; let regretList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 2 || s === 3; }); let regretHtml = ""; if (regretList.length > 0) { let maxRate = Math.max(...regretList.map(q => questionStats[q])); let topRegretQs = regretList.filter(q => questionStats[q] === maxRate); let qText = topRegretQs.join(', '); let rate = Math.round(maxRate); regretHtml = `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${qText}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`; } else { regretHtml = `<div class="analysis-box">👍 실수 방어 성공!</div>`; } let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; }); let proudHtml = ""; if (proudList.length > 0) { let minRate = Math.min(...proudList.map(q => questionStats[q])); let topProudQs = proudList.filter(q => questionStats[q] === minRate); let qText = topProudQs.join(', '); let rate = Math.round(minRate); proudHtml = `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${qText}번을 고쳐냈군요! 대단합니다.</div>`; } let warningHtml = ""; if (participationRate < 0.5) { warningHtml = `<div class="warning-box">⚠️ 아직 제출한 친구가 적어서(${participatedCount}명) 분석이 부정확할 수 있어요.</div>`; } document.getElementById('analysis-content').innerHTML = regretHtml + (proudHtml || "") + warningHtml; document.getElementById('analysis-modal').style.display = 'flex'; }
+    function updateChart(userData) { const ctx = document.getElementById('progressChart').getContext('2d'); let counts = [0, 0, 0, 0]; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; counts[val]++; }); if (myChart) myChart.destroy(); const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern()]; myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['안품', '맞음', '틀림', '고침'], datasets: [{ data: counts, backgroundColor: bgColors, borderWidth: 2, borderColor: 'white', borderRadius: 20, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } } }); }
+    function analyzePerformance() { if (!currentClassData || currentClassData.length === 0) return; let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); let myStatus = {...myData, ...tempChanges}; let questionStats = {}; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); let participatedCount = 0; keys.forEach(key => { let correctCount = 0; let totalStudents = 0; currentClassData.forEach(student => { let val = parseInt(student[key]) || 0; if (val === 1) correctCount++; totalStudents++; }); let count1 = currentClassData.filter(s => parseInt(s[key]) === 1).length; questionStats[key] = totalStudents === 0 ? 0 : (count1 / totalStudents) * 100; }); participatedCount = 0; currentClassData.forEach(s => { if(keys.some(k => parseInt(s[k]) > 0)) participatedCount++; }); let participationRate = participatedCount / currentClassData.length; let regretList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 2 || s === 3; }); let regretHtml = ""; if (regretList.length > 0) { let maxRate = Math.max(...regretList.map(q => questionStats[q])); let topRegretQs = regretList.filter(q => questionStats[q] === maxRate); let qText = topRegretQs.join(', '); let rate = Math.round(maxRate); regretHtml = `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${qText}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`; } else { regretHtml = `<div class="analysis-box">👍 실수 방어 성공!</div>`; } let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; }); let proudHtml = ""; if (proudList.length > 0) { let minRate = Math.min(...proudList.map(q => questionStats[q])); let topProudQs = proudList.filter(q => questionStats[q] === minRate); let qText = topProudQs.join(', '); let rate = Math.round(minRate); proudHtml = `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${qText}번을 고쳐냈군요! 대단합니다.</div>`; } let warningHtml = ""; if (participationRate < 0.5) { warningHtml = `<div class="warning-box">⚠️ 아직 제출한 친구가 적어서(${participatedCount}명) 분석이 부정확할 수 있어요.</div>`; } document.getElementById('analysis-content').innerHTML = regretHtml + (proudHtml || "") + warningHtml; document.getElementById('analysis-modal').style.display = 'flex'; }
     function closeModal(e, id) { if (e.target === document.getElementById(id)) { document.getElementById(id).style.display = 'none'; } }
-    function updateLocalStats() { let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (!myData) return; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); let total = 0; let done = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; total++; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : Math.round((done / total) * 100); let tier = getTierName(percent); let chapIndex = allChapters.findIndex(c => c.name === currentSheetName); if (chapIndex !== -1) { allChapters[chapIndex].percent = percent; allChapters[chapIndex].tier = tier; } filterChapters(); }
+    function updateLocalStats() { let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (!myData) return; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); let total = 0; let done = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; total++; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : Math.round((done / total) * 100); let tier = getTierName(percent); let chapIndex = allChapters.findIndex(c => c.name === currentSheetName); if (chapIndex !== -1) { allChapters[chapIndex].percent = percent; allChapters[chapIndex].tier = tier; } filterChapters(); }
 
     function saveData(exitMode = false) {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
-        if (keysToSave.length === 0) { statusDiv.innerText = "변경사항이 없습니다"; statusDiv.style.color = "var(--toss-text-gray)"; if(exitMode) exitWithoutSave(); return; }
+        const comment = document.getElementById('student-comment').value;
+
+        if (keysToSave.length === 0 && (!comment || comment.trim() === "")) { 
+            statusDiv.innerText = "변경사항이 없습니다"; statusDiv.style.color = "var(--toss-text-gray)"; 
+            if(exitMode) exitWithoutSave(); return; 
+        }
+
         toggleLoader(true); statusDiv.innerText = "저장 및 제출 중...";
         
         let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
-        const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
+        const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트');
         
         let stats = { correct: 0, fixed: 0, wrong: 0, none: 0 };
         let total = 0; let done = 0;
         keys.forEach(k => {
             let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0;
-            if (val === 1) stats.correct++;
-            else if (val === 3) stats.fixed++;
-            else if (val === 2) stats.wrong++;
-            else stats.none++;
+            if (val === 1) stats.correct++; else if (val === 3) stats.fixed++; else if (val === 2) stats.wrong++; else stats.none++;
             total++; if (val === 1 || val === 3) done++;
         });
         
@@ -184,8 +169,6 @@
         let tierName = getTierName(percent);
         let tierIcon = TIER_ICONS[tierName] || "🛡️";
         let tierStr = `${tierIcon} ${tierName} (${percent}%)`;
-        // [수정] 코멘트 내용 가져오기
-        let comment = document.getElementById('student-comment').value;
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
@@ -195,9 +178,9 @@
                 rowIndex: currentUserRowIndex,
                 changes: tempChanges,
                 studentName: userCredentials.name,
-                tierInfo: tierStr, 
+                tierInfo: tierStr,
                 stats: stats,
-                studentComment: comment // 서버 전송
+                studentComment: comment 
             })
         })
         .then(res => res.json())
@@ -206,8 +189,6 @@
             updateLocalStats(); 
             statusDiv.innerText = "✅ 제출 완료!"; statusDiv.style.color = "#00A86B";
             tempChanges = {}; 
-            // 코멘트 창 초기화 X (보존하려면 주석처리, 여기선 비우기)
-            document.getElementById('student-comment').value = "";
             setTimeout(() => { statusDiv.innerText = ""; }, 3000);
             if (exitMode) { toggleLoader(false); exitWithoutSave(); } 
             else { toggleLoader(false); loadGame(currentSheetName); }
