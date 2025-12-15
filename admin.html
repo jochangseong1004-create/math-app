@@ -25,9 +25,9 @@
         .btn-capture { background-color: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
         .btn-capture:hover { background-color: #27ae60; }
         
-        /* 피드백 복사 버튼 스타일 */
-        .btn-feedback { background-color: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .btn-feedback:hover { background-color: #d35400; }
+        /* 리포트 저장 버튼 (단원별 보기용) */
+        .btn-save-sheet { background-color: #e67e22; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+        .btn-save-sheet:hover { background-color: #d35400; }
 
         .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid #585b70; background: transparent; color: #cdd6f4; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
@@ -35,12 +35,14 @@
         .filter-btn.active .dot { border: 1px solid rgba(0,0,0,0.1); }
         .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
         .s-0 { background: #585b70; } .s-1 { background: #a6e3a1; } .s-2 { background: #f38ba8; } .s-3 { background: #89b4fa; } 
+        
         .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .report-card { background: #313244; padding: 20px; border-radius: 15px; border: 1px solid #45475a; }
         .card-header { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 18px; color: var(--admin-accent); }
         .item-list { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
         .item { padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: bold; color: #1e1e2e; }
         .item-0 { background: #585b70; color: white; } .item-1 { background: #a6e3a1; } .item-2 { background: #f38ba8; } .item-3 { background: #89b4fa; }
+        
         #capture-area { background: #1e1e2e; padding: 20px; border-radius: 15px; }
         #capture-header { display: none; text-align: center; margin-bottom: 20px; color: var(--text-white); }
         .loader { border: 4px solid #f3f3f3; border-top: 4px solid var(--admin-accent); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; display: none; }
@@ -52,7 +54,7 @@
     <h2>👨‍🏫 조창성T 관리자 모드</h2>
     <div id="login-screen">
         <input type="password" id="admin-pw" placeholder="관리자 비밀번호">
-        <button onclick="adminLogin()">접속하기 (데이터 로딩)</button>
+        <button onclick="adminLogin()">접속하기</button>
     </div>
     <div id="dashboard-screen">
         <div class="nav-tabs">
@@ -60,7 +62,7 @@
             <button class="nav-btn" onclick="switchTab('student')">🎓 학생별 보기</button>
         </div>
         <div id="loader" class="loader"></div>
-        <div id="loading-msg" style="text-align:center; color:#a6adc8; display:none; margin-bottom:20px;">모든 데이터를 불러오고 있습니다...<br>(잠시만 기다려주세요)</div>
+        <div id="loading-msg" style="text-align:center; color:#a6adc8; display:none; margin-bottom:20px;">데이터 로딩 중...</div>
 
         <div class="controls">
             <select id="main-select" onchange="renderView()">
@@ -73,8 +75,10 @@
                 <button class="filter-btn active" id="btn-2" onclick="toggleFilter(2)"><span class="dot s-2"></span> 틀림</button>
                 <button class="filter-btn active" id="btn-0" onclick="toggleFilter(0)"><span class="dot s-0"></span> 안품</button>
             </div>
+            
+            <button id="btn-save-sheet" class="btn-save-sheet" onclick="saveReportToSheet()">💾 리포트 시트에 저장</button>
+            
             <button id="btn-capture" class="btn-capture" style="display:none;" onclick="captureReport()">📸 캡처 저장</button>
-            <button id="btn-feedback" class="btn-feedback" style="display:none;" onclick="generateFeedback()">📝 피드백 복사</button>
         </div>
 
         <div id="view-area">
@@ -118,13 +122,13 @@
         currentMode = tab;
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
         const captureBtn = document.getElementById('btn-capture');
-        const feedbackBtn = document.getElementById('btn-feedback');
+        const saveSheetBtn = document.getElementById('btn-save-sheet');
         if(tab === 'chapter') {
             document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
-            captureBtn.style.display = 'none'; feedbackBtn.style.display = 'none';
+            captureBtn.style.display = 'none'; saveSheetBtn.style.display = 'flex';
         } else {
             document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
-            captureBtn.style.display = 'flex'; feedbackBtn.style.display = 'flex';
+            captureBtn.style.display = 'flex'; saveSheetBtn.style.display = 'none';
         }
         document.getElementById('main-select').value = "";
         document.getElementById('report-container').innerHTML = "";
@@ -177,7 +181,7 @@
         if(container.innerHTML === "") container.innerHTML = "<p style='text-align:center; width:100%; color:#a6adc8;'>해당 조건의 문항이 없습니다.</p>";
     }
     function createCard(title, dataObj) {
-        const keys = Object.keys(dataObj).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
+        const keys = Object.keys(dataObj).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트');
         let total = keys.length; let correct = 0; let filteredItems = [];
         keys.forEach(k => {
             let val = parseInt(dataObj[k]) || 0;
@@ -202,24 +206,55 @@
         });
     }
 
-    // ★★★ 피드백 생성 기능 ★★★
-    function generateFeedback() {
-        const name = document.getElementById('main-select').value;
-        if(!name) { alert("학생을 선택해주세요."); return; }
-        
-        // 가장 최근 단원 데이터 가져오기 (마지막 시트 기준)
-        const sheetNames = Object.keys(globalDB.sheets);
-        const lastSheetName = sheetNames[sheetNames.length - 1]; // 제일 마지막 시트가 최신이라고 가정
-        const sheetData = globalDB.sheets[lastSheetName];
-        const studentData = sheetData.find(row => row['이름'] === name);
-        
-        if(!studentData) { alert("데이터가 없습니다."); return; }
+    // ★★★ [NEW] 리포트 일괄 생성 및 시트 저장 ★★★
+    function saveReportToSheet() {
+        const sheetName = document.getElementById('main-select').value;
+        if (!sheetName) { alert("단원을 선택해주세요."); return; }
+        if (!confirm(`'${sheetName}' 단원의 모든 학생 리포트를 생성하여\n구글 시트 '리포트' 열에 저장하시겠습니까?`)) return;
 
-        // 통계 계산
-        const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
+        // 1. 현재 단원의 모든 학생 데이터 가져오기
+        const sheetData = globalDB.sheets[sheetName];
+        if (!sheetData) return;
+
+        // 2. 학생별 멘트 생성
+        let reports = [];
+        sheetData.forEach(student => {
+            let name = student['이름'];
+            let reportText = generateReportText(name, sheetName, student);
+            reports.push({ name: name, text: reportText });
+        });
+
+        // 3. 서버로 전송
+        document.getElementById('loader').style.display = 'block';
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "saveReportBatch",
+                sheetName: sheetName,
+                reports: reports
+            })
+        })
+        .then(res => res.json())
+        .then(json => {
+            document.getElementById('loader').style.display = 'none';
+            if (json.status === "success") {
+                alert("✅ 저장 완료!\n구글 시트의 해당 단원 맨 끝열을 확인하세요.");
+            } else {
+                alert("저장 실패: " + json.message);
+            }
+        })
+        .catch(err => {
+            document.getElementById('loader').style.display = 'none';
+            alert("서버 오류: " + err);
+        });
+    }
+
+    // 학생별 멘트 생성 함수 (로직 분리)
+    function generateReportText(name, sheetName, studentData) {
+        const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트');
         let total = keys.length;
         let correct = 0;
-        let done = 0; // 푼 문제 (1,2,3)
+        let done = 0; 
         let wrongList = [];
         
         keys.forEach(k => {
@@ -231,50 +266,25 @@
 
         let percent = total === 0 ? 0 : Math.round((correct/total)*100);
         let progress = total === 0 ? 0 : Math.round((done/total)*100);
+        let tierIcon = percent >= 90 ? "💎" : (percent >= 70 ? "💠" : (percent >= 50 ? "🥇" : "🛡️"));
 
-        // 등급 아이콘
-        let tierIcon = "🛡️";
-        if(percent >= 90) tierIcon = "💎";
-        else if(percent >= 70) tierIcon = "💠";
-        else if(percent >= 50) tierIcon = "🥇";
+        let text = `[조창성T 수학 과제 리포트]\n`;
+        text += `📌 학생: ${name}\n`;
+        text += `📚 단원: ${sheetName}\n`;
 
-        let feedback = `[조창성T 수학 과제 리포트]\n\n`;
-        feedback += `📌 학생: ${name}\n`;
-        feedback += `📚 단원: ${lastSheetName}\n`;
-        
-        // CASE 1: 미제출 (진도율 20% 미만)
         if (progress < 20) {
-            feedback += `⚠️ 결과: 미제출 (진도율 ${progress}%)\n\n`;
-            feedback += `📢 선생님 코멘트\n`;
-            feedback += `해당 단원의 과제 제출이 확인되지 않았습니다.\n`;
-            feedback += `과제가 밀리면 수업 이해도에 영향이 큽니다. 학생이 집에서 과제를 마무리할 수 있도록 가정에서도 지도 부탁드립니다.`;
-        } 
-        // CASE 2: 미흡 (정답률 50% 미만)
-        else if (percent < 50) {
-            feedback += `⚠️ 결과: 재학습 요망 (정답률 ${percent}%)\n\n`;
-            feedback += `📢 선생님 코멘트\n`;
-            feedback += `과제를 제출했으나, 개념 이해에 다소 어려움을 겪고 있습니다.\n`;
-            feedback += `단순 문제 풀이보다 개념 복습이 시급합니다. 수업 시간에 따로 확인하겠습니다. 격려 부탁드립니다.`;
-        } 
-        // CASE 3: 우수 (정상)
-        else {
-            feedback += `🏆 결과: ${tierIcon} 정답률 ${percent}% 달성\n\n`;
-            feedback += `📢 선생님 코멘트\n`;
-            feedback += `과제 수행도가 매우 우수합니다. `;
-            if(wrongList.length > 0) {
-                feedback += `틀린 문항(${wrongList.slice(0,3).join(', ')}번 등)은 오답 정리를 통해 완벽히 내 것으로 만들도록 지도하겠습니다.`;
-            } else {
-                feedback += `완벽하게 이해했습니다. 칭찬 부탁드립니다!`;
-            }
+            text += `⚠️ 결과: 미제출 (진도율 ${progress}%)\n\n`;
+            text += `📢 선생님 코멘트\n과제 미제출로 인한 수업 결손이 우려됩니다. 가정 내 지도 부탁드립니다.`;
+        } else if (percent < 50) {
+            text += `⚠️ 결과: 재학습 요망 (정답률 ${percent}%)\n\n`;
+            text += `📢 선생님 코멘트\n과제를 수행했으나 개념 이해에 어려움이 있습니다. 개념 복습 위주로 지도하겠습니다.`;
+        } else {
+            text += `🏆 결과: ${tierIcon} 정답률 ${percent}% 달성\n\n`;
+            text += `📢 선생님 코멘트\n과제 수행도가 우수합니다. `;
+            if(wrongList.length > 0) text += `틀린 문항(${wrongList.slice(0,3).join(', ')}번 등)은 오답 정리를 지도하겠습니다.`;
+            else text += `완벽하게 이해했습니다. 칭찬 부탁드립니다!`;
         }
-
-        // 클립보드 복사
-        navigator.clipboard.writeText(feedback).then(() => {
-            alert("📝 피드백이 복사되었습니다!\n카톡방에 붙여넣기 하세요.");
-        }).catch(err => {
-            alert("복사 실패 (브라우저 보안 설정 확인 필요)");
-            console.error(err);
-        });
+        return text;
     }
 </script>
 </body>
