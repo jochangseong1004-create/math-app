@@ -7,7 +7,6 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* 기존 스타일과 동일 */
         :root { --toss-blue:#0064FF; --toss-bg:#F2F4F6; --toss-text-dark:#191F28; --toss-text-gray:#8B95A1; --card-shadow:0 4px 20px rgba(0,0,0,0.05); --radius-L:24px; --radius-M:16px; }
         body { font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif; background-color:var(--toss-bg); margin:0; padding:20px; color:var(--toss-text-dark); -webkit-tap-highlight-color:transparent; }
         .container { max-width:600px; margin:0 auto; background:white; padding:30px 24px; border-radius:var(--radius-L); box-shadow:var(--card-shadow); min-height:85vh; position:relative; }
@@ -20,31 +19,22 @@
         .screen { display:none; flex-direction:column; } .active { display:flex; }
         
         .chapter-btn { display:flex; justify-content:space-between; align-items:center; width:100%; padding:18px 20px; background:white; border:1px solid #F2F4F6; border-radius:16px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.03); text-align:left; }
-        .chapter-btn:hover { background-color:#F9FAFB; }
-        .chap-name { font-size:17px; font-weight:600; color:#191F28; } .chap-stat { font-size:15px; font-weight:600; color:#6B7684; display:flex; align-items:center; gap:8px; } .stat-icon { font-size:20px; }
-
         .tier-badge { display:flex; flex-direction:column; align-items:center; justify-content:center; margin-bottom:24px; padding:24px 20px; border-radius:20px; background:white; border:2px solid #ddd; box-shadow:0 10px 30px rgba(0,0,0,0.05); transition:0.3s; }
-        .tier-row { display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
-        .tier-icon { font-size:40px; margin-right:10px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
-        .tier-name { font-size:26px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; }
+        .tier-row { display:flex; align-items:center; justify-content:center; margin-bottom:10px; } .tier-icon { font-size:40px; margin-right:10px; } .tier-name { font-size:26px; font-weight:800; text-transform:uppercase; }
         .rank-text { font-size:14px; font-weight:600; color:var(--toss-text-gray); background:#F2F4F6; padding:6px 14px; border-radius:20px; margin-bottom:15px; }
-        .tier-progress-bg { width:100%; height:8px; background:#F2F4F6; border-radius:4px; overflow:hidden; }
-        .tier-progress-fill { height:100%; background:#ddd; width:0%; border-radius:4px; transition:width 0.5s ease; }
-
+        .tier-progress-bg { width:100%; height:8px; background:#F2F4F6; border-radius:4px; overflow:hidden; } .tier-progress-fill { height:100%; background:#ddd; width:0%; border-radius:4px; transition:width 0.5s ease; }
         .tier-iron { border-color:#585858; color:#585858; } .tier-iron .tier-progress-fill { background:#585858; }
         .tier-bronze { border-color:#cd7f32; color:#cd7f32; } .tier-bronze .tier-progress-fill { background:#cd7f32; }
         .tier-silver { border-color:#7f8c8d; color:#7f8c8d; } .tier-silver .tier-progress-fill { background:#7f8c8d; }
         .tier-gold { border-color:#FFB300; color:#FFB300; } .tier-gold .tier-progress-fill { background:#FFB300; }
         .tier-platinum { border-color:#00b894; color:#00b894; } .tier-platinum .tier-progress-fill { background:#00b894; }
         .tier-diamond { border-color:#00CEC9; color:#00CEC9; } .tier-diamond .tier-progress-fill { background:#00CEC9; }
-        .tier-challenger { border:3px solid transparent; background-image:linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); background-origin:border-box; background-clip:content-box, border-box; }
-        .tier-challenger .tier-name { background:linear-gradient(to right, #fbc2eb, #a6c1ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-        .tier-challenger .tier-progress-fill { background:linear-gradient(to right, #fbc2eb, #a6c1ee); }
+        .tier-challenger { border:3px solid transparent; background-image:linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); background-origin:border-box; background-clip:content-box, border-box; } .tier-challenger .tier-progress-fill { background:linear-gradient(to right, #fbc2eb, #a6c1ee); } .tier-challenger .tier-name { background:linear-gradient(to right, #fbc2eb, #a6c1ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 
         .filter-options { display:flex; justify-content:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
         .filter-label { font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px; padding:8px 12px; background:#F9FAFB; border-radius:20px; color:var(--toss-text-gray); transition:0.2s; font-weight:500; }
         .filter-label:has(input:checked) { background-color:#E8F3FF; color:var(--toss-blue); font-weight:700; }
-
+        
         .grid-container { display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin-bottom:24px; }
         .grid-item { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color:white; border-radius:var(--radius-M); border:none; box-shadow:0 2px 8px rgba(0,0,0,0.05); transition:all 0.2s; }
         .grid-item.hidden { display:none; }
@@ -54,6 +44,15 @@
         .status-3 { background-color:#f0fff4; color:#218c74; box-shadow:inset 0 0 0 2px #218c74; background-image:repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(33, 140, 116, 0.1) 5px, rgba(33, 140, 116, 0.1) 10px); }
         .q-num { font-size:13px; font-weight:600; margin-bottom:4px; } .q-icon { font-size:24px; }
         
+        /* 코멘트 박스 스타일 추가 */
+        textarea {
+            width: 100%; height: 100px; padding: 16px; margin-bottom: 12px; border: none;
+            background-color: #F9FAFB; border-radius: var(--radius-M);
+            font-size: 15px; font-family: inherit; box-sizing: border-box; resize: none;
+        }
+        textarea::placeholder { color: #ADB5BD; font-weight: 400; line-height: 1.5; }
+        textarea:focus { outline: 2px solid var(--toss-blue); background: white; }
+
         .loader-wrapper { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; display:none; justify-content:center; align-items:center; border-radius:var(--radius-L); }
         .loader { border:4px solid #f3f3f3; border-top:4px solid var(--toss-blue); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
@@ -99,13 +98,18 @@
             <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="3" hidden>✅ 고침</label>
         </div>
         <div class="grid-container" id="grid-box"></div>
-        <div style="text-align:center; margin-top:20px;">
-            <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom:8px;"></div>
-            <div style="display:flex; gap:10px;">
-                <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
-                <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
+        
+        <div style="margin-top:20px;">
+            <textarea id="student-comment" placeholder="12번 너무 어려워요.&#10;20번 오타있어요.&#10;33번 답이 없어요."></textarea>
+            
+            <div style="text-align:center;">
+                <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom:8px;"></div>
+                <div style="display:flex; gap:10px;">
+                    <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
+                    <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
+                </div>
+                <button onclick="checkBackNavigation()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 목록으로</button>
             </div>
-            <button onclick="checkBackNavigation()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 목록으로</button>
         </div>
     </div>
 </div>
@@ -143,7 +147,7 @@
     }
     function setupClassFilter(chapters) { const filter = document.getElementById('class-filter'); filter.innerHTML = '<option value="all">전체 수업 보기</option>'; const classes = new Set(); chapters.forEach(chap => { const match = chap.name.match(/^\[(.*?)\]/); if (match) classes.add(match[0]); }); classes.forEach(cls => { const option = document.createElement('option'); option.value = cls; option.innerText = cls.replace(/[\[\]]/g, "") + " 수업"; filter.appendChild(option); }); }
     function filterChapters() { const selectedClass = document.getElementById('class-filter').value; const list = document.getElementById('chapter-list'); list.innerHTML = ""; allChapters.forEach(chap => { if (selectedClass === "all" || chap.name.startsWith(selectedClass)) { const btn = document.createElement('button'); btn.className = 'chapter-btn'; const safeTier = chap.tier || "IRON"; const safePercent = chap.percent || 0; const tierIcon = TIER_ICONS[safeTier] || "🛡️"; btn.innerHTML = `<span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span><span class="chap-stat">${safePercent}% <span class="stat-icon">${tierIcon}</span></span>`; btn.onclick = () => loadGame(chap.name); list.appendChild(btn); } }); }
-    function loadGame(sheetName) { currentSheetName = sheetName; history.pushState({page: 'game'}, document.title, "#game"); toggleLoader(true); const timestamp = new Date().getTime(); const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; fetch(requestUrl).then(res => res.json()).then(data => { toggleLoader(false); currentClassData = data; const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (user) { currentUserRowIndex = user['rowIndex']; showScreen('screen-game'); document.getElementById('game-title').innerText = `${sheetName} - ${user['이름']}`; renderGrid(user); updateChart(user); updateTier(user); } else { alert("학생 정보 없음"); history.back(); } }).catch(err => { toggleLoader(false); alert("로딩 실패: " + err.message); }); }
+    function loadGame(sheetName) { currentSheetName = sheetName; history.pushState({page: 'game'}, document.title, "#game"); toggleLoader(true); const timestamp = new Date().getTime(); const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; fetch(requestUrl).then(res => res.json()).then(data => { toggleLoader(false); currentClassData = data; const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (user) { currentUserRowIndex = user['rowIndex']; showScreen('screen-game'); document.getElementById('game-title').innerText = `${sheetName} - ${user['이름']}`; renderGrid(user); updateChart(user); updateTier(user); document.getElementById('student-comment').value = ""; } else { alert("학생 정보 없음"); history.back(); } }).catch(err => { toggleLoader(false); alert("로딩 실패: " + err.message); }); }
     function renderGrid(userData) { const gridBox = document.getElementById('grid-box'); gridBox.innerHTML = ""; tempChanges = {}; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; const div = document.createElement('button'); div.className = `grid-item ${CLASS_NAMES[val]}`; div.dataset.val = val; div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`; div.onclick = function() { playPopSound(); let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val; let nextVal = (current + 1) % 4; div.className = `grid-item ${CLASS_NAMES[nextVal]}`; div.dataset.val = nextVal; div.querySelector('.q-icon').innerText = ICONS[nextVal]; tempChanges[key] = nextVal; let previewData = {...userData, ...tempChanges}; updateChart(previewData); updateTier(previewData); applyViewFilter(); }; gridBox.appendChild(div); }); applyViewFilter(); }
     function applyViewFilter() { const checkboxes = document.querySelectorAll('.filter-options input'); const checkedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)); const items = document.querySelectorAll('.grid-item'); items.forEach(item => { const val = parseInt(item.dataset.val); if (checkedValues.includes(val)) { item.classList.remove('hidden'); } else { item.classList.add('hidden'); } }); }
     function getRank(myData, allData) { const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex'); if (keys.length === 0) return "-"; let scores = allData.map(student => { let score = 0; keys.forEach(k => { let val = parseInt(student[k]) || 0; if (val === 1 || val === 3) score++; }); return { name: student['이름'], score: score }; }); let myScore = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; if (val === 1 || val === 3) myScore++; }); let myEntryIndex = scores.findIndex(s => s.name === myData['이름']); if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore; scores.sort((a, b) => b.score - a.score); let rank = scores.findIndex(s => s.name === myData['이름']) + 1; return `${rank}위 / ${scores.length}명`; }
@@ -165,7 +169,6 @@
         let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
         const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex');
         
-        // [수정] 통계 카운트 계산
         let stats = { correct: 0, fixed: 0, wrong: 0, none: 0 };
         let total = 0; let done = 0;
         keys.forEach(k => {
@@ -174,16 +177,15 @@
             else if (val === 3) stats.fixed++;
             else if (val === 2) stats.wrong++;
             else stats.none++;
-            
-            total++;
-            if (val === 1 || val === 3) done++;
+            total++; if (val === 1 || val === 3) done++;
         });
         
         let percent = total === 0 ? 0 : Math.round((done / total) * 100);
         let tierName = getTierName(percent);
         let tierIcon = TIER_ICONS[tierName] || "🛡️";
-        // 텔레그램에 보낼 등급 문자열 (예: 👑 CHALLENGER (100%))
         let tierStr = `${tierIcon} ${tierName} (${percent}%)`;
+        // [수정] 코멘트 내용 가져오기
+        let comment = document.getElementById('student-comment').value;
 
         fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
@@ -193,8 +195,9 @@
                 rowIndex: currentUserRowIndex,
                 changes: tempChanges,
                 studentName: userCredentials.name,
-                tierInfo: tierStr, // 포맷팅된 문자열 전송
-                stats: stats // 상세 카운트 전송
+                tierInfo: tierStr, 
+                stats: stats,
+                studentComment: comment // 서버 전송
             })
         })
         .then(res => res.json())
@@ -203,6 +206,8 @@
             updateLocalStats(); 
             statusDiv.innerText = "✅ 제출 완료!"; statusDiv.style.color = "#00A86B";
             tempChanges = {}; 
+            // 코멘트 창 초기화 X (보존하려면 주석처리, 여기선 비우기)
+            document.getElementById('student-comment').value = "";
             setTimeout(() => { statusDiv.innerText = ""; }, 3000);
             if (exitMode) { toggleLoader(false); exitWithoutSave(); } 
             else { toggleLoader(false); loadGame(currentSheetName); }
