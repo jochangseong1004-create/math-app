@@ -68,13 +68,16 @@
     <div id="global-loader" class="loader-wrapper"><div class="loader"></div></div>
     <h2>📊 조창성T 수학 과제 분석</h2>
     <div id="screen-login" class="screen active">
-        <p style="text-align:center; color:var(--toss-text-gray);">이름과 비밀번호를 입력하세요</p>
+        <p style="text-align:center; color:var(--toss-text-gray); margin-bottom:5px;">수업을 선택하고 로그인하세요</p>
+        <select id="login-class-select">
+            <option value="" disabled selected>수업 불러오는 중...</option>
+        </select>
         <input type="text" id="input-name" placeholder="이름 (예: 홍길동)">
         <input type="password" id="input-pw" placeholder="비밀번호 (전화번호 뒤 4자리)">
         <button class="primary" onclick="goToChapterSelect()">내 진도표 보기</button>
     </div>
     <div id="screen-chapter" class="screen">
-        <h3>학습할 단원을 선택하세요</h3>
+        <h3 id="chapter-title">학습할 단원을 선택하세요</h3>
         <div style="margin-bottom:15px;"><select id="class-filter" onchange="filterChapters()"><option value="all">전체 수업 보기</option></select></div>
         <div id="chapter-list" style="display:flex; flex-direction:column; gap:10px;"></div>
         <button onclick="logout()" style="background-color:#F2F4F6; color:var(--toss-text-gray); margin-top:20px; width:100%; padding:16px; border:none; border-radius:16px;">로그아웃</button>
@@ -111,36 +114,101 @@
 <div id="exit-modal" class="modal-overlay"><div class="modal-content"><h3 style="margin-bottom:10px;">잠깐만요! 🛑</h3><p style="color:var(--toss-text-gray); margin-bottom:20px;">저장하지 않은 변경사항이 있습니다.<br>저장하고 목록으로 나갈까요?</p><div class="modal-btn-group"><button class="btn-yes" onclick="saveAndExit()">네, 저장하고 나갈래요</button><button class="btn-no" onclick="exitWithoutSave()">아니요, 그냥 나갈래요</button><button class="btn-cancel" onclick="document.getElementById('exit-modal').style.display='none'">취소 (계속 풀기)</button></div></div></div>
 
 <script>
-    // ★★★ 선생님 URL ★★★
+    // ★★★ 선생님의 Apps Script 배포 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
+    // 오디오 컨텍스트
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playPopSound() { if(audioCtx.state === 'suspended') audioCtx.resume(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
     function toggleLoader(show) { document.getElementById('global-loader').style.display = show ? 'flex' : 'none'; }
     window.addEventListener('popstate', function(event) { if (document.getElementById('screen-game').classList.contains('active')) { checkBackNavigation(); } });
+    
+    // 초기 실행: 수업 목록 불러오기
+    window.onload = function() {
+        fetch(GOOGLE_SCRIPT_URL + "?action=getClassList")
+        .then(res => res.json())
+        .then(data => {
+            const sel = document.getElementById('login-class-select');
+            sel.innerHTML = "";
+            data.forEach((cls, idx) => {
+                let opt = document.createElement('option');
+                opt.value = cls; opt.innerText = cls;
+                if(idx===0) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        });
+    };
+
+    let userCredentials = { className: "", name: "", pw: "" }; 
+    let currentSheetName = ""; let currentUserRowIndex = -1; let tempChanges = {}; let allChapters = []; let myChart = null; let currentClassData = [];
+    const ICONS = ["⚪", "🟢", "🔴", "✅"]; const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
+    const TIER_ICONS = { "CHALLENGER": "👑", "DIAMOND": "💎", "PLATINUM": "💠", "GOLD": "🥇", "SILVER": "🥈", "BRONZE": "🥉", "IRON": "🛡️" };
+
     function checkBackNavigation() { if (Object.keys(tempChanges).length > 0) { history.pushState({page: 'game'}, document.title, "#game"); document.getElementById('exit-modal').style.display = 'flex'; } else { exitWithoutSave(); } }
     function saveAndExit() { document.getElementById('exit-modal').style.display = 'none'; saveData(true); }
     function exitWithoutSave() { document.getElementById('exit-modal').style.display = 'none'; tempChanges = {}; currentSheetName = ""; showScreen('screen-chapter'); filterChapters(); history.replaceState(null, null, ' '); }
 
-    let userCredentials = { name: "", pw: "" }; let currentSheetName = ""; let currentUserRowIndex = -1; let tempChanges = {}; let allChapters = []; let myChart = null; let currentClassData = [];
-    const ICONS = ["⚪", "🟢", "🔴", "✅"]; const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
-    const TIER_ICONS = { "CHALLENGER": "👑", "DIAMOND": "💎", "PLATINUM": "💠", "GOLD": "🥇", "SILVER": "🥈", "BRONZE": "🥉", "IRON": "🛡️" };
+    function goToChapterSelect() { 
+        const cls = document.getElementById('login-class-select').value;
+        const name = document.getElementById('input-name').value.trim(); 
+        const pw = document.getElementById('input-pw').value.trim(); 
+        if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; } 
+        
+        userCredentials.className = cls;
+        userCredentials.name = name; 
+        userCredentials.pw = pw; 
+        
+        toggleLoader(true); 
+        fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&className=" + encodeURIComponent(cls) + "&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw))
+        .then(async (res) => { if (!res.ok) throw new Error("서버 연결 실패"); return res.json(); })
+        .then(data => { 
+            toggleLoader(false); 
+            if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } 
+            allChapters = data; 
+            document.getElementById('chapter-title').innerText = `[${cls}] 학습할 단원 선택`;
+            showScreen('screen-chapter'); 
+            setupClassFilter(data); 
+            filterChapters(); 
+        }).catch(err => { toggleLoader(false); alert("오류: " + err.message); }); 
+    }
 
-    function goToChapterSelect() { const name = document.getElementById('input-name').value.trim(); const pw = document.getElementById('input-pw').value.trim(); if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; } userCredentials.name = name; userCredentials.pw = pw; toggleLoader(true); fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw)).then(async (res) => { if (!res.ok) throw new Error("서버 연결 실패"); return res.json(); }).then(data => { toggleLoader(false); if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } allChapters = data; showScreen('screen-chapter'); setupClassFilter(data); filterChapters(); }).catch(err => { toggleLoader(false); alert("오류: " + err.message); }); }
     function setupClassFilter(chapters) { const filter = document.getElementById('class-filter'); filter.innerHTML = '<option value="all">전체 수업 보기</option>'; const classes = new Set(); chapters.forEach(chap => { const match = chap.name.match(/^\[(.*?)\]/); if (match) classes.add(match[0]); }); classes.forEach(cls => { const option = document.createElement('option'); option.value = cls; option.innerText = cls.replace(/[\[\]]/g, "") + " 수업"; filter.appendChild(option); }); }
     function filterChapters() { const selectedClass = document.getElementById('class-filter').value; const list = document.getElementById('chapter-list'); list.innerHTML = ""; allChapters.forEach(chap => { if (selectedClass === "all" || chap.name.startsWith(selectedClass)) { const btn = document.createElement('button'); btn.className = 'chapter-btn'; const safeTier = chap.tier || "IRON"; const safePercent = chap.percent || 0; const tierIcon = TIER_ICONS[safeTier] || "🛡️"; btn.innerHTML = `<span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span><span class="chap-stat">${safePercent}% <span class="stat-icon">${tierIcon}</span></span>`; btn.onclick = () => loadGame(chap.name); list.appendChild(btn); } }); }
-    function loadGame(sheetName) { currentSheetName = sheetName; history.pushState({page: 'game'}, document.title, "#game"); toggleLoader(true); const timestamp = new Date().getTime(); const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; fetch(requestUrl).then(res => res.json()).then(data => { toggleLoader(false); currentClassData = data; const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (user) { currentUserRowIndex = user['rowIndex']; showScreen('screen-game'); document.getElementById('game-title').innerText = `${sheetName} - ${user['이름']}`; renderGrid(user); updateChart(user); updateTier(user); document.getElementById('student-comment').value = ""; } else { alert("학생 정보 없음"); history.back(); } }).catch(err => { toggleLoader(false); alert("로딩 실패: " + err.message); }); }
-    function renderGrid(userData) { const gridBox = document.getElementById('grid-box'); gridBox.innerHTML = ""; tempChanges = {}; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; const div = document.createElement('button'); div.className = `grid-item ${CLASS_NAMES[val]}`; div.dataset.val = val; div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`; div.onclick = function() { playPopSound(); let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val; let nextVal = (current + 1) % 4; div.className = `grid-item ${CLASS_NAMES[nextVal]}`; div.dataset.val = nextVal; div.querySelector('.q-icon').innerText = ICONS[nextVal]; tempChanges[key] = nextVal; let previewData = {...userData, ...tempChanges}; updateChart(previewData); updateTier(previewData); applyViewFilter(); }; gridBox.appendChild(div); }); applyViewFilter(); }
+    
+    function loadGame(sheetName) { 
+        currentSheetName = sheetName; 
+        history.pushState({page: 'game'}, document.title, "#game"); 
+        toggleLoader(true); 
+        const timestamp = new Date().getTime(); 
+        // URL에 className 포함
+        const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&className=" + encodeURIComponent(userCredentials.className) + "&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; 
+        fetch(requestUrl).then(res => res.json()).then(data => { 
+            toggleLoader(false); 
+            currentClassData = data; 
+            const user = data.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); 
+            if (user) { 
+                currentUserRowIndex = user['rowIndex']; 
+                showScreen('screen-game'); 
+                document.getElementById('game-title').innerText = `${sheetName} - ${user['이름']}`; 
+                renderGrid(user); updateChart(user); updateTier(user); 
+                document.getElementById('student-comment').value = ""; 
+            } else { alert("학생 정보 없음"); history.back(); } 
+        }).catch(err => { toggleLoader(false); alert("로딩 실패: " + err.message); }); 
+    }
+
+    function renderGrid(userData) { const gridBox = document.getElementById('grid-box'); gridBox.innerHTML = ""; tempChanges = {}; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; const div = document.createElement('button'); div.className = `grid-item ${CLASS_NAMES[val]}`; div.dataset.val = val; div.innerHTML = `<div class="q-num">${key}</div><div class="q-icon">${ICONS[val]}</div>`; div.onclick = function() { playPopSound(); let current = (tempChanges[key] !== undefined) ? tempChanges[key] : val; let nextVal = (current + 1) % 4; div.className = `grid-item ${CLASS_NAMES[nextVal]}`; div.dataset.val = nextVal; div.querySelector('.q-icon').innerText = ICONS[nextVal]; tempChanges[key] = nextVal; let previewData = {...userData, ...tempChanges}; updateChart(previewData); updateTier(previewData); applyViewFilter(); }; gridBox.appendChild(div); }); applyViewFilter(); }
     function applyViewFilter() { const checkboxes = document.querySelectorAll('.filter-options input'); const checkedValues = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)); const items = document.querySelectorAll('.grid-item'); items.forEach(item => { const val = parseInt(item.dataset.val); if (checkedValues.includes(val)) { item.classList.remove('hidden'); } else { item.classList.add('hidden'); } }); }
-    function getRank(myData, allData) { const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); if (keys.length === 0) return "-"; let scores = allData.map(student => { let score = 0; keys.forEach(k => { let val = parseInt(student[k]) || 0; if (val === 1 || val === 3) score++; }); return { name: student['이름'], score: score }; }); let myScore = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; if (val === 1 || val === 3) myScore++; }); let myEntryIndex = scores.findIndex(s => s.name === myData['이름']); if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore; scores.sort((a, b) => b.score - a.score); let rank = scores.findIndex(s => s.name === myData['이름']) + 1; return `${rank}위 / ${scores.length}명`; }
+    function getRank(myData, allData) { const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트'); if (keys.length === 0) return "-"; let scores = allData.map(student => { let score = 0; keys.forEach(k => { let val = parseInt(student[k]) || 0; if (val === 1 || val === 3) score++; }); return { name: student['이름'], score: score }; }); let myScore = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; if (val === 1 || val === 3) myScore++; }); let myEntryIndex = scores.findIndex(s => s.name === myData['이름']); if(myEntryIndex !== -1) scores[myEntryIndex].score = myScore; scores.sort((a, b) => b.score - a.score); let rank = scores.findIndex(s => s.name === myData['이름']) + 1; return `${rank}위 / ${scores.length}명`; }
     function getTierName(percent) { if (percent === 100) return "CHALLENGER"; if (percent >= 90) return "DIAMOND"; if (percent >= 70) return "PLATINUM"; if (percent >= 50) return "GOLD"; if (percent >= 30) return "SILVER"; if (percent >= 10) return "BRONZE"; return "IRON"; }
-    function updateTier(userData) { const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); let total = keys.length; let done = 0; keys.forEach(k => { let val = parseInt(userData[k]) || 0; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : (done / total) * 100; let badge = document.getElementById('tier-badge'); let tierName = getTierName(percent); let tierIcon = TIER_ICONS[tierName] || "🛡️"; let rankText = getRank(userData, currentClassData); badge.className = `tier-badge tier-${tierName.toLowerCase()}`; badge.innerHTML = `<div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span class="tier-name">${tierName}</span></div><div class="rank-text">현재 순위 : ${rankText}</div><div class="tier-progress-bg"><div class="tier-progress-fill" style="width:${percent}%"></div></div>`; }
+    function updateTier(userData) { const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트'); let total = keys.length; let done = 0; keys.forEach(k => { let val = parseInt(userData[k]) || 0; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : (done / total) * 100; let badge = document.getElementById('tier-badge'); let tierName = getTierName(percent); let tierIcon = TIER_ICONS[tierName] || "🛡️"; let rankText = getRank(userData, currentClassData); badge.className = `tier-badge tier-${tierName.toLowerCase()}`; badge.innerHTML = `<div class="tier-row"><span class="tier-icon">${tierIcon}</span> <span class="tier-name">${tierName}</span></div><div class="rank-text">현재 순위 : ${rankText}</div><div class="tier-progress-bg"><div class="tier-progress-fill" style="width:${percent}%"></div></div>`; }
     function getPattern() { const patternCanvas = document.createElement('canvas'); const pCtx = patternCanvas.getContext('2d'); patternCanvas.width = 10; patternCanvas.height = 10; pCtx.fillStyle = '#E8F5E9'; pCtx.fillRect(0,0,10,10); pCtx.strokeStyle = '#218c74'; pCtx.lineWidth = 2; pCtx.beginPath(); pCtx.moveTo(0, 10); pCtx.lineTo(10, 0); pCtx.stroke(); return pCtx.createPattern(patternCanvas, 'repeat'); }
     const centerTextPlugin = { id: 'centerText', beforeDraw: function(chart) { if (chart.config.type !== 'doughnut') return; var width = chart.width, height = chart.height, ctx = chart.ctx; ctx.restore(); let data = chart.data.datasets[0].data; let total = data.reduce((a, b) => a + b, 0); let score = data[1] + data[3]; let percent = total === 0 ? 0 : Math.round((score / total) * 100); var fontSize = (height / 114).toFixed(2); ctx.font = "bold " + fontSize + "em Pretendard"; ctx.textBaseline = "middle"; ctx.fillStyle = "#191F28"; var text = percent + "%", textX = Math.round((width - ctx.measureText(text).width) / 2), textY = height / 2; ctx.fillText(text, textX, textY); ctx.save(); } }; Chart.register(centerTextPlugin);
-    function updateChart(userData) { const ctx = document.getElementById('progressChart').getContext('2d'); let counts = [0, 0, 0, 0]; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; counts[val]++; }); if (myChart) myChart.destroy(); const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern()]; myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['안품', '맞음', '틀림', '고침'], datasets: [{ data: counts, backgroundColor: bgColors, borderWidth: 2, borderColor: 'white', borderRadius: 20, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } } }); }
-    function analyzePerformance() { if (!currentClassData || currentClassData.length === 0) return; let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); let myStatus = {...myData, ...tempChanges}; let questionStats = {}; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); let participatedCount = 0; keys.forEach(key => { let correctCount = 0; let totalStudents = 0; currentClassData.forEach(student => { let val = parseInt(student[key]) || 0; if (val === 1) correctCount++; totalStudents++; }); let count1 = currentClassData.filter(s => parseInt(s[key]) === 1).length; questionStats[key] = totalStudents === 0 ? 0 : (count1 / totalStudents) * 100; }); participatedCount = 0; currentClassData.forEach(s => { if(keys.some(k => parseInt(s[k]) > 0)) participatedCount++; }); let participationRate = participatedCount / currentClassData.length; let regretList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 2 || s === 3; }); let regretHtml = ""; if (regretList.length > 0) { let maxRate = Math.max(...regretList.map(q => questionStats[q])); let topRegretQs = regretList.filter(q => questionStats[q] === maxRate); let qText = topRegretQs.join(', '); let rate = Math.round(maxRate); regretHtml = `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${qText}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`; } else { regretHtml = `<div class="analysis-box">👍 실수 방어 성공!</div>`; } let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; }); let proudHtml = ""; if (proudList.length > 0) { let minRate = Math.min(...proudList.map(q => questionStats[q])); let topProudQs = proudList.filter(q => questionStats[q] === minRate); let qText = topProudQs.join(', '); let rate = Math.round(minRate); proudHtml = `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${qText}번을 고쳐냈군요! 대단합니다.</div>`; } let warningHtml = ""; if (participationRate < 0.5) { warningHtml = `<div class="warning-box">⚠️ 아직 제출한 친구가 적어서(${participatedCount}명) 분석이 부정확할 수 있어요.</div>`; } document.getElementById('analysis-content').innerHTML = regretHtml + (proudHtml || "") + warningHtml; document.getElementById('analysis-modal').style.display = 'flex'; }
+    
+    function updateChart(userData) { const ctx = document.getElementById('progressChart').getContext('2d'); let counts = [0, 0, 0, 0]; const keys = Object.keys(userData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트'); keys.forEach(key => { const val = parseInt(userData[key]) || 0; counts[val]++; }); if (myChart) myChart.destroy(); const bgColors = ['#F2F4F6', '#00A86B', '#E31A1A', getPattern()]; myChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['안품', '맞음', '틀림', '고침'], datasets: [{ data: counts, backgroundColor: bgColors, borderWidth: 2, borderColor: 'white', borderRadius: 20, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } } }); }
+    
+    function analyzePerformance() { if (!currentClassData || currentClassData.length === 0) return; let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); let myStatus = {...myData, ...tempChanges}; let questionStats = {}; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트'); let participatedCount = 0; keys.forEach(key => { let correctCount = 0; let totalStudents = 0; currentClassData.forEach(student => { let val = parseInt(student[key]) || 0; if (val === 1) correctCount++; totalStudents++; }); let count1 = currentClassData.filter(s => parseInt(s[key]) === 1).length; questionStats[key] = totalStudents === 0 ? 0 : (count1 / totalStudents) * 100; }); participatedCount = 0; currentClassData.forEach(s => { if(keys.some(k => parseInt(s[k]) > 0)) participatedCount++; }); let participationRate = participatedCount / currentClassData.length; let regretList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 2 || s === 3; }); let regretHtml = ""; if (regretList.length > 0) { let maxRate = Math.max(...regretList.map(q => questionStats[q])); let topRegretQs = regretList.filter(q => questionStats[q] === maxRate); let qText = topRegretQs.join(', '); let rate = Math.round(maxRate); regretHtml = `<div class="analysis-box" style="border-left-color: #E31A1A;"><b>🚨 실수 주의!</b><br>${qText}번 문제는 친구들 <b>${rate}%</b>가 맞혔어요. 다시 확인해보세요!</div>`; } else { regretHtml = `<div class="analysis-box">👍 실수 방어 성공!</div>`; } let proudList = keys.filter(k => { let s = parseInt(myStatus[k]) || 0; return s === 3; }); let proudHtml = ""; if (proudList.length > 0) { let minRate = Math.min(...proudList.map(q => questionStats[q])); let topProudQs = proudList.filter(q => questionStats[q] === minRate); let qText = topProudQs.join(', '); let rate = Math.round(minRate); proudHtml = `<div class="analysis-box" style="border-left-color: #00A86B;"><b>🏆 킬러 정복!</b><br>정답률 <b>${rate}%</b>인 ${qText}번을 고쳐냈군요! 대단합니다.</div>`; } let warningHtml = ""; if (participationRate < 0.5) { warningHtml = `<div class="warning-box">⚠️ 아직 제출한 친구가 적어서(${participatedCount}명) 분석이 부정확할 수 있어요.</div>`; } document.getElementById('analysis-content').innerHTML = regretHtml + (proudHtml || "") + warningHtml; document.getElementById('analysis-modal').style.display = 'flex'; }
     function closeModal(e, id) { if (e.target === document.getElementById(id)) { document.getElementById(id).style.display = 'none'; } }
-    function updateLocalStats() { let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (!myData) return; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트'); let total = 0; let done = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; total++; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : Math.round((done / total) * 100); let tier = getTierName(percent); let chapIndex = allChapters.findIndex(c => c.name === currentSheetName); if (chapIndex !== -1) { allChapters[chapIndex].percent = percent; allChapters[chapIndex].tier = tier; } filterChapters(); }
+    function updateLocalStats() { let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); if (!myData) return; const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트'); let total = 0; let done = 0; keys.forEach(k => { let val = parseInt(tempChanges[k] !== undefined ? tempChanges[k] : myData[k]) || 0; total++; if (val === 1 || val === 3) done++; }); let percent = total === 0 ? 0 : Math.round((done / total) * 100); let tier = getTierName(percent); let chapIndex = allChapters.findIndex(c => c.name === currentSheetName); if (chapIndex !== -1) { allChapters[chapIndex].percent = percent; allChapters[chapIndex].tier = tier; } filterChapters(); }
 
     function saveData(exitMode = false) {
         const statusDiv = document.getElementById('save-status');
@@ -155,7 +223,7 @@
         toggleLoader(true); statusDiv.innerText = "저장 및 제출 중...";
         
         let myData = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
-        const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트');
+        const keys = Object.keys(myData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '리포트' && k !== '오답노트');
         
         let stats = { correct: 0, fixed: 0, wrong: 0, none: 0 };
         let total = 0; let done = 0;
@@ -174,6 +242,7 @@
             method: 'POST',
             body: JSON.stringify({
                 action: "saveBatch",
+                className: userCredentials.className, // 수업 정보 전송
                 sheetName: currentSheetName,
                 rowIndex: currentUserRowIndex,
                 changes: tempChanges,
