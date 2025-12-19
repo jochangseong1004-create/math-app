@@ -23,7 +23,6 @@
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .controls select { flex: 1; min-width: 150px; }
         
-        /* 버튼 스타일 */
         .btn-action { color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; }
         .btn-green { background-color: #2ecc71; } .btn-green:hover { background-color: #27ae60; }
         .btn-orange { background-color: #e67e22; } .btn-orange:hover { background-color: #d35400; }
@@ -143,7 +142,6 @@
     function initAdmin() {
         document.getElementById('loader').style.display = 'block';
         document.getElementById('loading-msg').style.display = 'block';
-        // 수업 이름(className)을 서버로 전송
         fetch(GOOGLE_SCRIPT_URL + "?action=getAllData&className=" + encodeURIComponent(currentClassName))
         .then(res => res.json()).then(data => {
             document.getElementById('loader').style.display = 'none';
@@ -155,11 +153,8 @@
     function switchTab(tab) {
         currentMode = tab;
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-        
-        // 버튼 표시 제어
         const chapterBtns = [document.getElementById('btn-save-sheet'), document.getElementById('btn-save-note'), document.getElementById('btn-class-analysis')];
         const studentBtns = [document.getElementById('btn-capture'), document.getElementById('btn-total-report'), document.getElementById('btn-feedback')];
-
         if(tab === 'chapter') {
             document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
             chapterBtns.forEach(b => b.style.display = 'flex');
@@ -236,34 +231,26 @@
         return `<div class="report-card"><div class="card-header"><span>${title}</span><span>${percent}%</span></div><div class="item-list">${filteredItems.map(item => `<span class="item item-${item.val}">${item.num}</span>`).join('')}</div></div>`;
     }
 
-    // --- 기능 1: 리포트 멘트 시트 저장 ---
     function saveReportToSheet() {
         const sheetName = document.getElementById('main-select').value;
         if (!sheetName) return alert("단원을 선택해주세요.");
         if (!confirm(`'${sheetName}' 리포트를 저장하시겠습니까?`)) return;
-
         const sheetData = globalDB.sheets[sheetName];
         let reports = sheetData.map(student => ({ name: student['이름'], text: generateReportText(student['이름'], sheetName, student) }));
-
         sendBatchData("saveReportBatch", sheetName, reports);
     }
 
-    // --- 기능 2: 오답노트(번호) 시트 저장 ---
     function saveWrongNotesToSheet() {
         const sheetName = document.getElementById('main-select').value;
         if (!sheetName) return alert("단원을 선택해주세요.");
         if (!confirm(`현재 필터링된 문항 번호를\n'오답노트' 열에 저장하시겠습니까?`)) return;
-
         const sheetData = globalDB.sheets[sheetName];
         let reports = sheetData.map(student => {
             const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
-            // 필터링된 번호만 추출
             let notes = keys.filter(k => activeFilters.includes(parseInt(student[k]) || 0));
-            // 숫자 정렬 (문자열 비교 방지용)
             notes.sort((a,b) => parseInt(a) - parseInt(b));
             return { name: student['이름'], text: notes.join(", ") };
         });
-
         sendBatchData("saveWrongNotesBatch", sheetName, reports);
     }
 
@@ -276,27 +263,33 @@
         .then(res => res.json())
         .then(json => {
             document.getElementById('loader').style.display = 'none';
-            if (json.status === "success") alert("✅ 저장 완료!");
-            else alert("저장 실패: " + json.message);
+            if (json.status === "success") alert("✅ 저장 완료!"); else alert("저장 실패: " + json.message);
         })
         .catch(err => { document.getElementById('loader').style.display = 'none'; alert("서버 오류: " + err); });
     }
 
-    // --- 기능 3: 종합 리포트 생성 (Blue/Green 분석) ---
+    // ★★★ [업그레이드] 종합 리포트 생성 (단원별 상세 분석 포함) ★★★
     function generateComprehensiveReport() {
         const name = document.getElementById('main-select').value;
         if(!name) return alert("학생을 선택해주세요.");
         
         let totalGreen = 0, totalBlue = 0, totalCount = 0;
         let sheetNames = Object.keys(globalDB.sheets);
-        
-        // 반 전체 통계 (평균 구하기용)
         let classGreenSum = 0, classBlueSum = 0, classItemCount = 0;
+
+        // 단원별 성향 분류 (Green:개념완성, Blue:약점극복, Red:보완필요)
+        let greenChapters = [];
+        let blueChapters = [];
+        let redChapters = [];
 
         sheetNames.forEach(sName => {
             let sData = globalDB.sheets[sName];
+            
+            // 학생 본인의 해당 단원 통계
+            let myGreen = 0, myBlue = 0, myTotal = 0;
+
             sData.forEach(row => {
-                const keys = Object.keys(row).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
+                const keys = Object.keys(row).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
                 keys.forEach(k => {
                     let v = parseInt(row[k]) || 0;
                     classItemCount++;
@@ -304,12 +297,23 @@
                     if(v === 3) classBlueSum++;
                     
                     if(row['이름'] === name) {
-                        totalCount++;
-                        if(v === 1) totalGreen++;
-                        if(v === 3) totalBlue++;
+                        totalCount++; myTotal++;
+                        if(v === 1) { totalGreen++; myGreen++; }
+                        if(v === 3) { totalBlue++; myBlue++; }
                     }
                 });
             });
+
+            // 단원 분류 로직
+            if (myTotal > 0) {
+                let gRate = (myGreen / myTotal) * 100;
+                let bRate = (myBlue / myTotal) * 100;
+                let correctRate = ((myGreen + myBlue) / myTotal) * 100;
+
+                if (gRate >= 70) greenChapters.push(sName); // 초기 정답률 70% 이상이면 개념완성
+                else if (bRate >= 15 || (correctRate >= 80 && bRate > 5)) blueChapters.push(sName); // 많이 고쳤거나, 최종점수는 높은데 고친게 좀 있으면
+                else redChapters.push(sName); // 나머지는 보완필요
+            }
         });
 
         let myGreenRate = (totalGreen / totalCount) * 100;
@@ -317,35 +321,60 @@
         let avgGreenRate = (classGreenSum / classItemCount) * 100;
         let avgBlueRate = (classBlueSum / classItemCount) * 100;
 
-        let text = `[조창성T 수학 종합 분석]\n📌 학생: ${name}\n📅 수업: ${currentClassName}\n\n`;
+        let text = `[조창성T 수학 종합 분석]\n\n`;
+        text += `📌 학생: ${name}\n`;
+        text += `📅 수업: ${currentClassName} (총 ${sheetNames.length}개 단원)\n\n`;
         
         // 1. 핵심 역량 분석
-        text += `1️⃣ 핵심 역량 분석\n`;
-        if (myBlueRate > avgBlueRate * 1.2) {
-            text += `🔥 '오답 수정 능력'이 탁월합니다!\n틀린 문제를 끝까지 파고들어 해결하는 끈기가 반 평균보다 월등히 높습니다.\n`;
-        } else if (myGreenRate > avgGreenRate * 1.2) {
-            text += `🟢 '개념 이해도'가 매우 뛰어납니다!\n문제를 한 번에 맞히는 직관력과 개념 적용력이 우수합니다.\n`;
+        text += `1️⃣ 핵심 역량 분석 (반 평균 비교)\n`;
+        if (myBlueRate > avgBlueRate * 1.1) {
+            text += `🔥 '오답 수정 능력'이 상위권입니다!\n친구들에 비해 틀린 문제를 스스로 고쳐내는 비율이 압도적으로 높습니다. 모르는 문제가 나와도 끝까지 답을 찾아내는 끈기와 과제 집착력이 이 학생의 가장 큰 무기입니다.\n`;
+        } else if (myGreenRate > avgGreenRate * 1.1) {
+            text += `🟢 '개념 이해도'가 매우 뛰어납니다!\n문제를 한 번에 맞히는 직관력이 우수합니다. 배운 내용을 스펀지처럼 흡수하는 능력이 있습니다.\n`;
         } else {
-            text += `💪 성실하게 학습을 이어가고 있습니다.\n오답 정리를 조금 더 꼼꼼히 한다면 실력이 크게 향상될 것입니다.\n`;
+            text += `💪 '꾸준함'이 돋보이는 학생입니다.\n성실하게 과제를 수행하고 있습니다. 오답 정리를 조금 더 꼼꼼히 한다면 실력이 크게 향상될 것입니다.\n`;
         }
 
-        text += `\n2️⃣ 성취도 요약\n`;
-        text += `- 1차 정답률(Green): ${Math.round(myGreenRate)}% (평균 ${Math.round(avgGreenRate)}%)\n`;
-        text += `- 오답 해결률(Blue): ${Math.round(myBlueRate)}% (평균 ${Math.round(avgBlueRate)}%)\n`;
+        // 2. 단원별 상세 코멘트
+        text += `\n2️⃣ 단원별 상세 코멘트\n`;
+        
+        if (greenChapters.length > 0) {
+            text += `🟢 개념 완성 단원 (한 번에 많이 맞음)\n`;
+            text += `   - [${greenChapters.join('], [')}]\n`;
+            text += `   : 초기 정답률이 매우 높습니다. 해당 단원의 개념과 공식이 머릿속에 완벽히 정리되어 있습니다.\n\n`;
+        }
+        
+        if (blueChapters.length > 0) {
+            text += `🔵 약점 극복 단원 (많이 고쳐서 완성함)\n`;
+            text += `   - [${blueChapters.join('], [')}]\n`;
+            text += `   : 처음에는 오답이 있었으나, 오답 정리를 통해 스스로 해결해냈습니다. 과정이 훌륭했던 단원입니다. 칭찬해 주세요!\n\n`;
+        }
+        
+        if (redChapters.length > 0) {
+            text += `🔴 보완 필요 단원 (아직 틀린 게 남음)\n`;
+            text += `   - [${redChapters.join('], [')}]\n`;
+            text += `   : 아직 해결되지 않은 문항이 일부 남아있습니다. 클리닉 시간에 저와 함께 마무리하도록 하겠습니다.\n\n`;
+        }
+
+        // 3. 총평
+        text += `📢 총평\n`;
+        if (myBlueRate > avgBlueRate) {
+            text += `${name} 학생은 '빠른 정답'보다 '알아가는 과정'에 강점이 있습니다. 지금의 끈기 있는 학습 태도를 유지한다면 고난도 문제 해결력이 비약적으로 상승할 것입니다.`;
+        } else if (myGreenRate > avgGreenRate) {
+            text += `${name} 학생은 수학적 감각이 좋습니다. 실수를 줄이는 연습과 고난도 유형에 대한 도전만 더해진다면 최상위권 도약이 가능합니다.`;
+        } else {
+            text += `꾸준히 성장하고 있는 ${name} 학생을 응원합니다. 가정에서도 따뜻한 격려 부탁드립니다.`;
+        }
 
         navigator.clipboard.writeText(text).then(() => alert("📋 종합 리포트가 복사되었습니다!"));
     }
 
-    // --- 기능 4: 수업 준비 분석 (공통 오답) ---
     function analyzeClassWeakness() {
         const sheetName = document.getElementById('main-select').value;
         if (!sheetName) return alert("단원을 선택해주세요.");
-
         const sheetData = globalDB.sheets[sheetName];
         let totalStudents = sheetData.length;
-        let qStats = {}; // { "1": {wrong: 5, none: 2}, "2": ... }
-
-        // 통계 집계
+        let qStats = {};
         sheetData.forEach(student => {
             const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
             keys.forEach(k => {
@@ -356,35 +385,17 @@
                 if(val === 0 || val === 2) qStats[k].totalBad++;
             });
         });
-
-        // 정렬 (많이 틀린 순)
         let sortedQs = Object.keys(qStats).map(k => ({ num: k, ...qStats[k] }));
         sortedQs.sort((a, b) => b.totalBad - a.totalBad);
-
         let text = `[${currentClassName} - ${sheetName}] 수업 준비 분석\n*총원: ${totalStudents}명*\n\n`;
-        
         let urgent = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.5);
         let warning = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.3 && (q.totalBad/totalStudents) < 0.5);
-
-        if(urgent.length > 0) {
-            text += `🚨 최우선 해설 (오답률 50%↑)\n`;
-            urgent.forEach(q => {
-                text += `${q.num}번 (${q.totalBad}명) - 미완료${q.none}, 틀림${q.wrong}\n`;
-            });
-            text += `\n`;
-        }
-        if(warning.length > 0) {
-            text += `⚠️ 주의 문항 (오답률 30%↑)\n`;
-            warning.forEach(q => {
-                text += `${q.num}번 (${q.totalBad}명)\n`;
-            });
-        }
+        if(urgent.length > 0) { text += `🚨 최우선 해설 (오답률 50%↑)\n`; urgent.forEach(q => { text += `${q.num}번 (${q.totalBad}명) - 미완료${q.none}, 틀림${q.wrong}\n`; }); text += `\n`; }
+        if(warning.length > 0) { text += `⚠️ 주의 문항 (오답률 30%↑)\n`; warning.forEach(q => { text += `${q.num}번 (${q.totalBad}명)\n`; }); }
         if(urgent.length === 0 && warning.length === 0) text += "👍 특별히 취약한 문항이 없습니다.";
-
         navigator.clipboard.writeText(text).then(() => alert("📋 수업 분석 리포트가 복사되었습니다!"));
     }
 
-    // (기존) 캡처 기능
     function captureReport() {
         const captureArea = document.getElementById('capture-area');
         const header = document.getElementById('capture-header');
@@ -399,17 +410,15 @@
         });
     }
 
-    // (기존) 피드백 텍스트 생성
     function generateFeedback() {
         const name = document.getElementById('main-select').value;
-        const sheetName = Object.keys(globalDB.sheets).pop(); // 최신 단원
+        const sheetName = Object.keys(globalDB.sheets).pop(); 
         const sheetData = globalDB.sheets[sheetName];
         const student = sheetData.find(row => row['이름'] === name);
         if(!student) return alert("데이터 없음");
         navigator.clipboard.writeText(generateReportText(name, sheetName, student)).then(() => alert("📝 피드백 복사 완료!"));
     }
 
-    // 헬퍼: 리포트 멘트 생성기
     function generateReportText(name, sheetName, studentData) {
         const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
         let total = keys.length, correct = 0, done = 0, wrongList = [];
@@ -422,7 +431,6 @@
         let percent = total === 0 ? 0 : Math.round((correct/total)*100);
         let progress = total === 0 ? 0 : Math.round((done/total)*100);
         let tierIcon = percent >= 90 ? "💎" : (percent >= 70 ? "💠" : (percent >= 50 ? "🥇" : "🛡️"));
-
         let text = `[조창성T 수학 리포트] ${name} (${sheetName})\n`;
         if (progress < 20) text += `⚠️ 미제출 (진도율 ${progress}%)\n과제 미제출로 수업 결손 우려. 가정 지도 부탁드립니다.`;
         else if (percent < 50) text += `⚠️ 재학습 요망 (정답률 ${percent}%)\n개념 이해 부족. 복습 위주 지도하겠습니다.`;
