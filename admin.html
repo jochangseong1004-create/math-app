@@ -268,102 +268,122 @@
         .catch(err => { document.getElementById('loader').style.display = 'none'; alert("서버 오류: " + err); });
     }
 
-    // ★★★ [업그레이드] 종합 리포트 생성 (단원별 상세 분석 포함) ★★★
+    // ★★★ [로직 대폭 수정] 종합 리포트 생성 (상대평가 + 절대평가) ★★★
     function generateComprehensiveReport() {
         const name = document.getElementById('main-select').value;
         if(!name) return alert("학생을 선택해주세요.");
         
-        let totalGreen = 0, totalBlue = 0, totalCount = 0;
-        let sheetNames = Object.keys(globalDB.sheets);
-        let classGreenSum = 0, classBlueSum = 0, classItemCount = 0;
-
-        // 단원별 성향 분류 (Green:개념완성, Blue:약점극복, Red:보완필요)
-        let greenChapters = [];
-        let blueChapters = [];
-        let redChapters = [];
-
+        const sheetNames = Object.keys(globalDB.sheets);
+        
+        let greenList = []; // 내 Green > 평균 Green 인 단원
+        let blueList = []; // 내 Blue > 평균 Blue 인 단원
+        let redCandidates = []; // 점수가 낮은 단원들 (후보)
+        
         sheetNames.forEach(sName => {
-            let sData = globalDB.sheets[sName];
+            const sData = globalDB.sheets[sName];
             
-            // 학생 본인의 해당 단원 통계
-            let myGreen = 0, myBlue = 0, myTotal = 0;
-
+            // 1. 반 평균 계산 (해당 단원)
+            let totalGreen = 0, totalBlue = 0, totalItems = 0;
             sData.forEach(row => {
-                const keys = Object.keys(row).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+                const keys = Object.keys(row).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
                 keys.forEach(k => {
                     let v = parseInt(row[k]) || 0;
-                    classItemCount++;
-                    if(v === 1) classGreenSum++;
-                    if(v === 3) classBlueSum++;
-                    
-                    if(row['이름'] === name) {
-                        totalCount++; myTotal++;
-                        if(v === 1) { totalGreen++; myGreen++; }
-                        if(v === 3) { totalBlue++; myBlue++; }
-                    }
+                    totalItems++;
+                    if(v === 1) totalGreen++;
+                    if(v === 3) totalBlue++;
                 });
             });
+            let avgGreenRate = totalItems === 0 ? 0 : (totalGreen / totalItems) * 100;
+            let avgBlueRate = totalItems === 0 ? 0 : (totalBlue / totalItems) * 100;
+            
+            // 2. 내 점수 계산
+            const myRow = sData.find(r => r['이름'] === name);
+            if(myRow) {
+                const keys = Object.keys(myRow).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호');
+                let myGreen = 0, myBlue = 0, myTotal = 0;
+                keys.forEach(k => {
+                    let v = parseInt(myRow[k]) || 0;
+                    myTotal++;
+                    if(v === 1) myGreen++;
+                    if(v === 3) myBlue++;
+                });
+                
+                if(myTotal > 0) {
+                    let myGreenRate = (myGreen / myTotal) * 100;
+                    let myBlueRate = (myBlue / myTotal) * 100;
+                    let myScore = ((myGreen + myBlue) / myTotal) * 100;
 
-            // 단원 분류 로직
-            if (myTotal > 0) {
-                let gRate = (myGreen / myTotal) * 100;
-                let bRate = (myBlue / myTotal) * 100;
-                let correctRate = ((myGreen + myBlue) / myTotal) * 100;
-
-                if (gRate >= 70) greenChapters.push(sName); // 초기 정답률 70% 이상이면 개념완성
-                else if (bRate >= 15 || (correctRate >= 80 && bRate > 5)) blueChapters.push(sName); // 많이 고쳤거나, 최종점수는 높은데 고친게 좀 있으면
-                else redChapters.push(sName); // 나머지는 보완필요
+                    // 3. 비교 및 분류 (상대평가)
+                    // Green: 내가 반 평균보다 높으면 인정
+                    if (myGreenRate >= avgGreenRate) {
+                        greenList.push({ name: sName, my: myGreenRate, avg: avgGreenRate });
+                    }
+                    // Blue: 내가 반 평균보다 높으면 인정 (단, 고친 게 있긴 해야함 > 0)
+                    if (myBlueRate > 0 && myBlueRate >= avgBlueRate) {
+                        blueList.push({ name: sName, my: myBlueRate, avg: avgBlueRate });
+                    }
+                    // Red: 점수 저장 (절대평가용)
+                    redCandidates.push({ name: sName, score: myScore });
+                }
             }
         });
 
-        let myGreenRate = (totalGreen / totalCount) * 100;
-        let myBlueRate = (totalBlue / totalCount) * 100;
-        let avgGreenRate = (classGreenSum / classItemCount) * 100;
-        let avgBlueRate = (classBlueSum / classItemCount) * 100;
+        // 4. Red 선정 (내 점수 중 최하위 1~2개)
+        redCandidates.sort((a, b) => a.score - b.score);
+        let redList = [];
+        let isPerfect = false;
 
+        if (redCandidates.length > 0) {
+            // 꼴찌 단원이 95점 이상이면 "약점 없음" 처리
+            if (redCandidates[0].score >= 95) {
+                isPerfect = true;
+            } else {
+                redList.push(redCandidates[0]); // 꼴찌
+                if (redCandidates.length > 1 && redCandidates[1].score < 80) {
+                    redList.push(redCandidates[1]); // 꼴찌 앞잡이도 못봤으면 추가
+                }
+            }
+        }
+
+        // 5. 멘트 생성
         let text = `[조창성T 수학 종합 분석]\n\n`;
         text += `📌 학생: ${name}\n`;
         text += `📅 수업: ${currentClassName} (총 ${sheetNames.length}개 단원)\n\n`;
-        
-        // 1. 핵심 역량 분석
+
+        // 요약
         text += `1️⃣ 핵심 역량 분석 (반 평균 비교)\n`;
-        if (myBlueRate > avgBlueRate * 1.1) {
-            text += `🔥 '오답 수정 능력'이 상위권입니다!\n친구들에 비해 틀린 문제를 스스로 고쳐내는 비율이 압도적으로 높습니다. 모르는 문제가 나와도 끝까지 답을 찾아내는 끈기와 과제 집착력이 이 학생의 가장 큰 무기입니다.\n`;
-        } else if (myGreenRate > avgGreenRate * 1.1) {
-            text += `🟢 '개념 이해도'가 매우 뛰어납니다!\n문제를 한 번에 맞히는 직관력이 우수합니다. 배운 내용을 스펀지처럼 흡수하는 능력이 있습니다.\n`;
+        if (blueList.length >= greenList.length && blueList.length > 0) {
+            text += `🔥 '오답 수정 능력'이 탁월합니다!\n틀린 문제를 스스로 고쳐내는 비율이 반 평균보다 높은 단원이 많습니다. 모르는 문제가 나와도 끝까지 답을 찾아내는 끈기와 과제 집착력이 이 학생의 가장 큰 무기입니다.\n`;
+        } else if (greenList.length > 0) {
+            text += `🟢 '개념 이해도'가 매우 뛰어납니다!\n남들보다 한 번에 정답을 맞히는 비율이 높습니다. 개념을 빠르고 정확하게 흡수하는 능력이 있습니다.\n`;
         } else {
-            text += `💪 '꾸준함'이 돋보이는 학생입니다.\n성실하게 과제를 수행하고 있습니다. 오답 정리를 조금 더 꼼꼼히 한다면 실력이 크게 향상될 것입니다.\n`;
+            text += `💪 성실하게 학습을 이어가고 있습니다.\n전체적인 과제 수행도가 안정적입니다. 오답 정리에 조금 더 집중한다면 실력이 크게 향상될 것입니다.\n`;
         }
 
-        // 2. 단원별 상세 코멘트
         text += `\n2️⃣ 단원별 상세 코멘트\n`;
         
-        if (greenChapters.length > 0) {
-            text += `🟢 개념 완성 단원 (한 번에 많이 맞음)\n`;
-            text += `   - [${greenChapters.join('], [')}]\n`;
-            text += `   : 초기 정답률이 매우 높습니다. 해당 단원의 개념과 공식이 머릿속에 완벽히 정리되어 있습니다.\n\n`;
+        if (greenList.length > 0) {
+            let names = greenList.map(item => `[${item.name}]`).join(', ');
+            text += `🟢 개념 완성 (초기 정답률 우수)\n   ${names}\n   : 반 평균보다 높은 정답률을 기록했습니다. 개념과 공식이 머릿속에 완벽히 정리되어 있습니다.\n\n`;
         }
         
-        if (blueChapters.length > 0) {
-            text += `🔵 약점 극복 단원 (많이 고쳐서 완성함)\n`;
-            text += `   - [${blueChapters.join('], [')}]\n`;
-            text += `   : 처음에는 오답이 있었으나, 오답 정리를 통해 스스로 해결해냈습니다. 과정이 훌륭했던 단원입니다. 칭찬해 주세요!\n\n`;
-        }
-        
-        if (redChapters.length > 0) {
-            text += `🔴 보완 필요 단원 (아직 틀린 게 남음)\n`;
-            text += `   - [${redChapters.join('], [')}]\n`;
-            text += `   : 아직 해결되지 않은 문항이 일부 남아있습니다. 클리닉 시간에 저와 함께 마무리하도록 하겠습니다.\n\n`;
+        if (blueList.length > 0) {
+             let names = blueList.map(item => `[${item.name}]`).join(', ');
+            text += `🔵 약점 극복 (오답 수정 노력 우수)\n   ${names}\n   : 틀린 문제를 포기하지 않고 고쳐낸 비율이 반 평균보다 높습니다. 남들보다 더 많이 노력한 단원입니다. 칭찬해 주세요!\n\n`;
         }
 
-        // 3. 총평
+        if (isPerfect) {
+            text += `💎 약점 없음 (Perfect!)\n   : 모든 단원에서 95점 이상의 최상위 성취도를 기록했습니다. 약점을 찾기 힘들 정도로 완벽합니다.\n\n`;
+        } else if (redList.length > 0) {
+            let names = redList.map(item => `[${item.name}]`).join(', ');
+            text += `🔴 보완 필요 (개인별 취약 단원)\n   ${names}\n   : 해당 단원의 점수가 다른 단원에 비해 낮습니다. 클리닉 시간에 저와 함께 집중적으로 보완하도록 하겠습니다.\n\n`;
+        }
+
         text += `📢 총평\n`;
-        if (myBlueRate > avgBlueRate) {
-            text += `${name} 학생은 '빠른 정답'보다 '알아가는 과정'에 강점이 있습니다. 지금의 끈기 있는 학습 태도를 유지한다면 고난도 문제 해결력이 비약적으로 상승할 것입니다.`;
-        } else if (myGreenRate > avgGreenRate) {
-            text += `${name} 학생은 수학적 감각이 좋습니다. 실수를 줄이는 연습과 고난도 유형에 대한 도전만 더해진다면 최상위권 도약이 가능합니다.`;
+        if (blueList.length > 0) {
+             text += `${name} 학생은 '결과'보다 '과정'에서 빛나는 학생입니다. 지금 보여주는 끈기 있는 태도는 고난도 문제 해결의 핵심 열쇠가 될 것입니다.`;
         } else {
-            text += `꾸준히 성장하고 있는 ${name} 학생을 응원합니다. 가정에서도 따뜻한 격려 부탁드립니다.`;
+             text += `${name} 학생은 탄탄한 기본기를 갖추고 있습니다. 실수를 줄이는 연습만 더해진다면 최상위권 도약이 충분히 가능합니다.`;
         }
 
         navigator.clipboard.writeText(text).then(() => alert("📋 종합 리포트가 복사되었습니다!"));
