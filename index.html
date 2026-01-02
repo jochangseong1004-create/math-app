@@ -8,7 +8,17 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --toss-blue:#0064FF; --toss-bg:#F2F4F6; --toss-text-dark:#191F28; --toss-text-gray:#8B95A1; --card-shadow:0 4px 20px rgba(0,0,0,0.05); --radius-L:24px; --radius-M:16px; }
-        body { font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif; background-color:var(--toss-bg); margin:0; padding:20px; color:var(--toss-text-dark); -webkit-tap-highlight-color:transparent; }
+        
+        /* ★ [핵심] 새로고침 당기기 방지 (overscroll-behavior) ★ */
+        body { 
+            font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif; 
+            background-color:var(--toss-bg); 
+            margin:0; padding:20px; 
+            color:var(--toss-text-dark); 
+            -webkit-tap-highlight-color:transparent;
+            overscroll-behavior-y: contain; /* 당겨서 새로고침 방지 */
+        }
+
         .container { max-width:600px; margin:0 auto; background:white; padding:30px 24px; border-radius:var(--radius-L); box-shadow:var(--card-shadow); min-height:85vh; position:relative; }
         h2, h3 { text-align:center; color:var(--toss-text-dark); margin-bottom:20px; font-weight:700; }
         button { font-family:inherit; transition:all 0.1s ease; cursor:pointer; } button:active { transform:scale(0.96); }
@@ -114,17 +124,16 @@
 <div id="exit-modal" class="modal-overlay"><div class="modal-content"><h3 style="margin-bottom:10px;">잠깐만요! 🛑</h3><p style="color:var(--toss-text-gray); margin-bottom:20px;">저장하지 않은 변경사항이 있습니다.<br>저장하고 목록으로 나갈까요?</p><div class="modal-btn-group"><button class="btn-yes" onclick="saveAndExit()">네, 저장하고 나갈래요</button><button class="btn-no" onclick="exitWithoutSave()">아니요, 그냥 나갈래요</button><button class="btn-cancel" onclick="document.getElementById('exit-modal').style.display='none'">취소 (계속 풀기)</button></div></div></div>
 
 <script>
-    // ★★★ 선생님의 Apps Script 배포 URL ★★★
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
-    // 오디오 컨텍스트
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playPopSound() { if(audioCtx.state === 'suspended') audioCtx.resume(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1); gain.gain.setValueAtTime(0.3, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.1); }
     function toggleLoader(show) { document.getElementById('global-loader').style.display = show ? 'flex' : 'none'; }
     window.addEventListener('popstate', function(event) { if (document.getElementById('screen-game').classList.contains('active')) { checkBackNavigation(); } });
     
-    // 초기 실행: 수업 목록 불러오기
+    // ★★★ [업그레이드] 초기 실행: 수업 목록 불러오기 + 자동 로그인 체크 ★★★
     window.onload = function() {
+        // 1. 수업 목록 로딩
         fetch(GOOGLE_SCRIPT_URL + "?action=getClassList")
         .then(res => res.json())
         .then(data => {
@@ -136,8 +145,27 @@
                 if(idx===0) opt.selected = true;
                 sel.appendChild(opt);
             });
+
+            // 2. 자동 로그인 체크 (수업 목록 로딩 후 실행)
+            checkAutoLogin();
         });
     };
+
+    function checkAutoLogin() {
+        const savedName = localStorage.getItem('mathApp_name');
+        const savedPw = localStorage.getItem('mathApp_pw');
+        const savedClass = localStorage.getItem('mathApp_class');
+
+        if (savedName && savedPw && savedClass) {
+            // 저장된 정보가 있으면 자동으로 입력하고 로그인 시도
+            document.getElementById('input-name').value = savedName;
+            document.getElementById('input-pw').value = savedPw;
+            document.getElementById('login-class-select').value = savedClass;
+            
+            // 0.5초 뒤 자동 로그인 실행 (UI 로딩 자연스럽게)
+            setTimeout(() => goToChapterSelect(true), 500);
+        }
+    }
 
     let userCredentials = { className: "", name: "", pw: "" }; 
     let currentSheetName = ""; let currentUserRowIndex = -1; let tempChanges = {}; let allChapters = []; let myChart = null; let currentClassData = [];
@@ -148,11 +176,15 @@
     function saveAndExit() { document.getElementById('exit-modal').style.display = 'none'; saveData(true); }
     function exitWithoutSave() { document.getElementById('exit-modal').style.display = 'none'; tempChanges = {}; currentSheetName = ""; showScreen('screen-chapter'); filterChapters(); history.replaceState(null, null, ' '); }
 
-    function goToChapterSelect() { 
+    function goToChapterSelect(isAuto = false) { 
         const cls = document.getElementById('login-class-select').value;
         const name = document.getElementById('input-name').value.trim(); 
         const pw = document.getElementById('input-pw').value.trim(); 
-        if(!name || !pw) { alert("이름과 비번을 입력해주세요."); return; } 
+        
+        if(!name || !pw) { 
+            if(!isAuto) alert("이름과 비번을 입력해주세요."); 
+            return; 
+        } 
         
         userCredentials.className = cls;
         userCredentials.name = name; 
@@ -163,7 +195,22 @@
         .then(async (res) => { if (!res.ok) throw new Error("서버 연결 실패"); return res.json(); })
         .then(data => { 
             toggleLoader(false); 
-            if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } 
+            if (!data || data.length === 0) { 
+                if(!isAuto) alert("학생 정보를 찾을 수 없습니다."); // 자동로그인 실패 시 조용히 넘어가거나 알림
+                else {
+                    // 자동 로그인 실패 시(비번 변경 등) 저장 정보 삭제
+                    localStorage.removeItem('mathApp_name');
+                    localStorage.removeItem('mathApp_pw');
+                    localStorage.removeItem('mathApp_class');
+                }
+                return; 
+            } 
+            
+            // ★ 로그인 성공 시 로컬스토리지에 저장 (자동로그인용)
+            localStorage.setItem('mathApp_name', name);
+            localStorage.setItem('mathApp_pw', pw);
+            localStorage.setItem('mathApp_class', cls);
+
             allChapters = data; 
             document.getElementById('chapter-title').innerText = `[${cls}] 학습할 단원 선택`;
             showScreen('screen-chapter'); 
@@ -180,7 +227,6 @@
         history.pushState({page: 'game'}, document.title, "#game"); 
         toggleLoader(true); 
         const timestamp = new Date().getTime(); 
-        // URL에 className 포함
         const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&className=" + encodeURIComponent(userCredentials.className) + "&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; 
         fetch(requestUrl).then(res => res.json()).then(data => { 
             toggleLoader(false); 
@@ -266,7 +312,14 @@
     }
 
     function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-    function logout() { userCredentials = {}; location.reload(); }
+    function logout() { 
+        // 로그아웃 시 저장된 정보 삭제
+        localStorage.removeItem('mathApp_name');
+        localStorage.removeItem('mathApp_pw');
+        localStorage.removeItem('mathApp_class');
+        userCredentials = {}; 
+        location.reload(); 
+    }
 </script>
 </body>
 </html>
