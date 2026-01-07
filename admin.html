@@ -467,30 +467,84 @@
         });
     }
 
+    // ★★★ [업그레이드] 수업 준비 분석 (공통 오답 + 개인별 희귀 오답) ★★★
     function analyzeClassWeakness() {
         const sheetName = document.getElementById('main-select').value;
         if (!sheetName) return alert("단원을 선택해주세요.");
+
         const sheetData = globalDB.sheets[sheetName];
         let totalStudents = sheetData.length;
-        let qStats = {};
+        
+        // 1단계: 문항별 오답자 수 전수 조사 (Global Stats)
+        let qStats = {}; // { "1": {wrong:0, none:0, totalBad:0}, ... }
+        
         sheetData.forEach(student => {
             const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
             keys.forEach(k => {
                 if(!qStats[k]) qStats[k] = { wrong: 0, none: 0, totalBad: 0 };
+                
                 let val = parseInt(student[k]) || 0;
+                // 틀림(2) 또는 안품(0)인 경우 집계
                 if(val === 2) qStats[k].wrong++;
                 if(val === 0) qStats[k].none++;
                 if(val === 0 || val === 2) qStats[k].totalBad++;
             });
         });
+
+        // 2단계: 공통 취약점 분석 (기존 기능)
         let sortedQs = Object.keys(qStats).map(k => ({ num: k, ...qStats[k] }));
-        sortedQs.sort((a, b) => b.totalBad - a.totalBad);
+        sortedQs.sort((a, b) => b.totalBad - a.totalBad); // 많이 틀린 순 정렬
+
         let text = `[${currentClassName} - ${sheetName}] 수업 준비 분석\n*총원: ${totalStudents}명*\n\n`;
+        
         let urgent = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.5);
         let warning = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.3 && (q.totalBad/totalStudents) < 0.5);
-        if(urgent.length > 0) { text += `🚨 최우선 해설 (오답률 50%↑)\n`; urgent.forEach(q => { text += `${q.num}번 (${q.totalBad}명) - 미완료${q.none}, 틀림${q.wrong}\n`; }); text += `\n`; }
-        if(warning.length > 0) { text += `⚠️ 주의 문항 (오답률 30%↑)\n`; warning.forEach(q => { text += `${q.num}번 (${q.totalBad}명)\n`; }); }
-        if(urgent.length === 0 && warning.length === 0) text += "👍 특별히 취약한 문항이 없습니다.";
+
+        text += `📊 공통 오답 분석 (판서 추천)\n`;
+        if(urgent.length > 0) {
+            text += `🚨 최우선 해설 (오답률 50%↑)\n`;
+            urgent.forEach(q => { text += `${q.num}번 (${q.totalBad}명) - 미완료${q.none}, 틀림${q.wrong}\n`; });
+        } else if (warning.length > 0) {
+            text += `⚠️ 주의 문항 (오답률 30%↑)\n`;
+            warning.forEach(q => { text += `${q.num}번 (${q.totalBad}명)\n`; });
+        } else {
+            text += `👍 특별히 취약한 공통 문항이 없습니다.\n`;
+        }
+
+        // 3단계: 나만 틀린 문제 분석 (New!)
+        // 기준: 해당 문제를 틀린(0 or 2) 사람이 2명 이하인 경우
+        text += `\n--------------------------------\n`;
+        text += `🎯 나만 틀린 문제 (개별 지도용)\n`;
+        text += `*본인 포함 2명 이하 오답 문항 (괄호 안은 오답자 수)*\n\n`;
+
+        let hasPersonalData = false;
+
+        sheetData.forEach(student => {
+            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+            // 문항 번호 순 정렬
+            keys.sort((a,b) => parseInt(a) - parseInt(b));
+
+            let myUniqueErrors = []; // 나만 틀린 문제 리스트
+
+            keys.forEach(k => {
+                let val = parseInt(student[k]) || 0;
+                // 내가 틀렸거나 안 풀었는데 (0 or 2)
+                if (val === 0 || val === 2) {
+                    // 전체 오답자 수가 2명 이하라면
+                    if (qStats[k].totalBad <= 2) {
+                        myUniqueErrors.push(`${k}번(${qStats[k].totalBad})`);
+                    }
+                }
+            });
+
+            if (myUniqueErrors.length > 0) {
+                hasPersonalData = true;
+                text += `${student['이름']}: ${myUniqueErrors.join(', ')}\n`;
+            }
+        });
+
+        if (!hasPersonalData) text += "(해당 사항 없음 - 모두가 잘했거나, 모두가 같이 틀렸습니다.)";
+
         navigator.clipboard.writeText(text).then(() => alert("📋 수업 분석 리포트가 복사되었습니다!"));
     }
 
