@@ -354,17 +354,40 @@
         selectedStudentData.studentText = generateStudentMessage(studentName, lastSheet, student);
     }
 
+// ★★★ [수정됨] 학생 독려 멘트 생성기 (빈칸 인식 오류 해결) ★★★
     function generateStudentMessage(name, sheetName, studentData) {
+        // 특수 열 제외
         const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
-        keys.sort((a,b)=>parseInt(a)-parseInt(b));
-        let total = keys.length; let doneCount = 0; let remainingList = [];
-        keys.forEach(k => { if(parseInt(studentData[k])!==0) doneCount++; else remainingList.push(k); });
-        let percent = total === 0 ? 0 : Math.round((doneCount/total)*100);
+        keys.sort((a,b) => parseInt(a) - parseInt(b));
+        
+        let total = keys.length;
+        let doneCount = 0;
+        let remainingList = [];
+
+        keys.forEach(k => {
+            // ★ 수정 포인트: || 0 을 붙여서 빈칸이나 이상한 값은 무조건 0으로 만듦
+            let val = parseInt(studentData[k]) || 0; 
+            
+            if (val !== 0) {
+                doneCount++; // 1(맞음), 2(틀림), 3(고침)은 수행한 것으로 간주
+            } else {
+                remainingList.push(k); // 0은 안 푼 문제
+            }
+        });
+        
+        let percent = total === 0 ? 0 : Math.round((doneCount / total) * 100);
         let msg = "";
+        
+        // 이름이 3글자 이상이면 '성' 떼고 부르기 (예: 김서준 -> 서준)
         let firstName = name.length > 2 ? name.substring(1) : name; 
-        if (percent === 100) { msg = `${firstName}아! ${sheetName} 숙제 100% 완료라니 대박이다! 🎉\n오답 정리까지 완벽해. 오늘 푹 쉬어! 👍`; } 
-        else if (percent >= 80) { msg = `${firstName}아, 숙제 ${percent}%나 했네? 거의 다 했다! 😎\n남은 문제(${remainingList.slice(0,3).join(',')}번 등)만 딱 끝내고 쉬자. 화이팅! 🔥`; } 
-        else { msg = `${firstName}아~ ${sheetName} 숙제 아직 ${percent}%야. 😢\n우리 조금만 더 힘내서 진도 맞추자. 할 수 있지? 💪`; }
+
+        if (percent === 100) {
+            msg = `${firstName}아! ${sheetName} 숙제 100% 완료라니 대박이다! 🎉\n오답 정리까지 완벽해. 오늘 푹 쉬어! 👍`;
+        } else if (percent >= 80) {
+            msg = `${firstName}아, 숙제 ${percent}%나 했네? 거의 다 했다! 😎\n남은 문제(${remainingList.slice(0,3).join(',')}번 등)만 딱 끝내고 쉬자. 화이팅! 🔥`;
+        } else {
+            msg = `${firstName}아~ ${sheetName} 숙제 아직 ${percent}%야. 😢\n우리 조금만 더 힘내서 진도 맞추자. 할 수 있지? 💪`;
+        }
         return msg;
     }
 
