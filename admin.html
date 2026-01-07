@@ -353,23 +353,24 @@
         selectedStudentData.parentText = generateReportText(studentName, lastSheet, student); 
         selectedStudentData.studentText = generateStudentMessage(studentName, lastSheet, student);
     }
-    // ★★★ [수정] 학생 독려 문자 (완료율 계산: 맞음+고침만 인정) ★★★
+    // ★★★ [최종] 학생 독려 문자 (고칠 것/안 푼 것 구분) ★★★
     function generateStudentMessage(name, sheetName, studentData) {
         const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
         keys.sort((a,b) => parseInt(a) - parseInt(b));
         
         let total = keys.length;
         let doneCount = 0;
-        let remainingList = [];
+        
+        let toFixList = [];   // 틀림 (2)
+        let unsolvedList = []; // 안품 (0)
 
         keys.forEach(k => {
             let val = parseInt(studentData[k]) || 0;
             
-            // ★ 수정됨: 1(맞음)과 3(고침)만 완료로 인정!
             if (val === 1 || val === 3) doneCount++;
             
-            // 남은 문제는 '안 푼 것(0)' 위주로 알려줌
-            if (val === 0) remainingList.push(k); 
+            if (val === 2) toFixList.push(k + "번");
+            if (val === 0) unsolvedList.push(k + "번");
         });
         
         let percent = total === 0 ? 0 : Math.round((doneCount / total) * 100);
@@ -379,10 +380,26 @@
 
         if (percent === 100) {
             msg = `${firstName}아! [${sheetName} 숙제] 100% 완료라니 대박이다! 🎉\n오답 정리까지 완벽해. 오늘 푹 쉬어! 👍`;
-        } else if (percent >= 80) {
-            msg = `${firstName}아, [${sheetName} 숙제] ${percent}%나 했네? 거의 다 했다! 😎\n남은 문제(${remainingList.slice(0,3).join(',')}번 등)만 딱 끝내고 쉬자. 화이팅! 🔥`;
         } else {
-            msg = `${firstName}아~ [${sheetName} 숙제] 아직 ${percent}%야. 😢\n우리 조금만 더 힘내서 진도 맞추자. 할 수 있지? 💪`;
+            // 퍼센트에 따라 서두 멘트 결정
+            if (percent >= 80) {
+                msg = `${firstName}아, [${sheetName} 숙제] ${percent}%나 했네? 거의 다 했다! 😎\n`;
+            } else {
+                msg = `${firstName}아~ [${sheetName} 숙제] 아직 ${percent}%야. 조금 더 힘내자! 💪\n`;
+            }
+
+            // ★ 상세 내용 추가
+            if (toFixList.length > 0) {
+                // 너무 길면 5개만 보여주고 ... 처리
+                let displayFix = toFixList.length > 5 ? toFixList.slice(0,5).join(',') + "..." : toFixList.join(',');
+                msg += `\n🖍 고쳐야 할 문제: ${displayFix}`;
+            }
+            if (unsolvedList.length > 0) {
+                let displayUnsolved = unsolvedList.length > 5 ? unsolvedList.slice(0,5).join(',') + "..." : unsolvedList.join(',');
+                msg += `\n📝 안 푼 문제: ${displayUnsolved}`;
+            }
+
+            msg += `\n\n얼른 마무리하고 쉬자! 화이팅! 🔥`;
         }
         return msg;
     }
@@ -398,12 +415,13 @@
         navigator.clipboard.writeText(text).then(() => alert("📋 내용이 복사되었습니다!"));
     }
 
-    
-// ★★★ [수정] 학부모 리포트 (완료율 계산: 맞음+고침만 인정) ★★★
+    // ★★★ [최종] 학부모 리포트 (남은 문제 상세 분류: 고칠 것 vs 안 푼 것) ★★★
     function generateReportText(name, sheetName, studentData) {
+        // 특수 열 제외
         const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
         keys.sort((a, b) => parseInt(a) - parseInt(b));
 
+        // 점수 계산
         let rawInput = studentData['복습테스트'];
         let testDisplay = "   점 (  /6)";
         if (rawInput !== undefined && rawInput !== "") {
@@ -418,21 +436,29 @@
 
         let total = keys.length;
         let doneCount = 0;
-        let remainingList = [];
-        let fixedList = [];
+        
+        // 리스트 분류
+        let toFixList = [];   // 틀림 (2) -> 고쳐야 할 문제
+        let unsolvedList = []; // 안품 (0) -> 안 푼 문제
+        let fixedList = [];    // 고침 (3) -> 오답 완료
 
         keys.forEach(k => {
             let val = parseInt(studentData[k]) || 0;
             
-            // ★ 수정됨: 1(맞음)과 3(고침)만 완료로 인정! (2는 제외)
-            if (val === 1 || val === 3) doneCount++;
+            // 완료율 계산: 1(맞음)과 3(고침)만 인정
+            if (val === 1 || val === 3) {
+                doneCount++;
+            }
             
-            if (val === 0) remainingList.push(k + "번"); 
+            // 상세 분류
+            if (val === 2) toFixList.push(k + "번");
+            if (val === 0) unsolvedList.push(k + "번");
             if (val === 3) fixedList.push(k + "번");
         });
 
         let percent = total === 0 ? 0 : Math.round((doneCount / total) * 100);
 
+        // 코멘트 로직
         let comment = "";
         if (percent === 100) comment = "성실하게 모든 과제를 완료했습니다. 오답 정리까지 훌륭합니다! 가정에서도 많은 칭찬 부탁드립니다.";
         else if (percent >= 90) comment = "대부분의 과제를 잘 수행했습니다. 남은 몇 문항만 마무리하면 완벽합니다.";
@@ -440,20 +466,35 @@
         else if (percent >= 50) comment = "과제 완료율이 다소 낮습니다. 학습 공백이 생기지 않도록 가정에서도 남은 문제 풀이를 독려해 주시면 감사하겠습니다.";
         else comment = "현재 과제 미흡으로 학습 결손이 우려됩니다. 학생이 수업 진도를 잘 따라갈 수 있도록 가정에서의 각별한 관심과 지도가 필요합니다.";
 
+        // 텍스트 조립
         let text = `[조창성T 수학 알림]\n`;
         text += `${name} 학생 - ${sheetName}\n`;
         text += `복습테스트: ${testDisplay}\n`; 
         text += `숙제 완료율: ${percent}% (${doneCount}/${total})\n`;
         
-        if (remainingList.length > 0) {
-            if(remainingList.length > 15) text += `남은 문제: ${remainingList.slice(0, 15).join(', ')} 외 ${remainingList.length - 15}문항\n`;
-            else text += `남은 문제: ${remainingList.join(', ')}\n`;
-        } else { text += `남은 문제: 없음 (완료)\n`; }
+        // ★ [변경] 고쳐야 할 문제 (Status 2)
+        if (toFixList.length > 0) {
+            if(toFixList.length > 15) text += `⚠️ 고쳐야 할 문제: ${toFixList.slice(0, 15).join(', ')} 외 ${toFixList.length - 15}문항\n`;
+            else text += `⚠️ 고쳐야 할 문제: ${toFixList.join(', ')}\n`;
+        }
 
+        // ★ [변경] 안 푼 문제 (Status 0)
+        if (unsolvedList.length > 0) {
+            if(unsolvedList.length > 15) text += `⚪ 안 푼 문제: ${unsolvedList.slice(0, 15).join(', ')} 외 ${unsolvedList.length - 15}문항\n`;
+            else text += `⚪ 안 푼 문제: ${unsolvedList.join(', ')}\n`;
+        }
+
+        // 둘 다 없으면 완료 표시
+        if (toFixList.length === 0 && unsolvedList.length === 0) {
+            text += `남은 문제: 없음 (완료)\n`;
+        }
+
+        // 오답 완료 (Status 3)
         if (fixedList.length > 0) {
             if(fixedList.length > 15) text += `오답 완료: ${fixedList.slice(0, 15).join(', ')} 외 ${fixedList.length - 15}문항\n`;
             else text += `오답 완료: ${fixedList.join(', ')}\n`;
         }
+
         text += `${comment}`;
         return text;
     }
