@@ -24,20 +24,28 @@
         .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .controls select { flex: 1; min-width: 150px; }
         
+        /* 버튼 스타일 */
         .btn-action { color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; }
-        .btn-green { background-color: #2ecc71; }
-        .btn-orange { background-color: #e67e22; }
-        .btn-blue { background-color: #3498db; }
-        .btn-purple { background-color: #9b59b6; }
-        .btn-red { background-color: #e74c3c; }
+        .btn-green { background-color: #2ecc71; } .btn-green:hover { background-color: #27ae60; }
+        .btn-orange { background-color: #e67e22; } .btn-orange:hover { background-color: #d35400; }
+        .btn-blue { background-color: #3498db; } .btn-blue:hover { background-color: #2980b9; }
+        .btn-purple { background-color: #9b59b6; } .btn-purple:hover { background-color: #8e44ad; }
+        .btn-red { background-color: #e74c3c; } .btn-red:hover { background-color: #c0392b; }
         .btn-telegram { background-color: #0088cc; } .btn-telegram:hover { background-color: #0077b5; }
+        .btn-dark { background-color: #45475a; } .btn-dark:hover { background-color: #585b70; }
 
+        /* 필터 버튼 */
         .filter-group { display: flex; gap: 5px; flex-wrap: wrap; }
         .filter-btn { padding: 8px 12px; border-radius: 20px; border: 1px solid #585b70; background: transparent; color: #cdd6f4; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 4px; transition: 0.2s; }
         .filter-btn.active { background: white; color: var(--admin-dark); border-color: white; font-weight: bold; }
         .filter-btn.active .dot { border: 1px solid rgba(0,0,0,0.1); }
         .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
         .s-0 { background: #585b70; } .s-1 { background: #a6e3a1; } .s-2 { background: #f38ba8; } .s-3 { background: #89b4fa; } 
+
+        /* 커뮤니케이션 패널 스타일 */
+        #comm-panel { display: none; background: #313244; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #45475a; }
+        .comm-group { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .comm-label { font-weight: bold; width: 80px; color: #a6adc8; }
         
         .report-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .report-card { background: #313244; padding: 20px; border-radius: 15px; border: 1px solid #45475a; }
@@ -78,6 +86,7 @@
 
         <div class="controls">
             <select id="main-select" onchange="renderView()"><option value="">선택하세요...</option></select>
+            
             <div class="filter-group">
                 <button class="filter-btn active" id="btn-all" onclick="toggleFilter('all')">전체</button>
                 <button class="filter-btn active" id="btn-1" onclick="toggleFilter(1)"><span class="dot s-1"></span> 맞음</button>
@@ -85,14 +94,31 @@
                 <button class="filter-btn active" id="btn-2" onclick="toggleFilter(2)"><span class="dot s-2"></span> 틀림</button>
                 <button class="filter-btn active" id="btn-0" onclick="toggleFilter(0)"><span class="dot s-0"></span> 안품</button>
             </div>
-            
-            <button id="btn-save-sheet" class="btn-action btn-orange" onclick="saveReportToSheet()">💾 리포트 저장</button>
+
+            <button id="btn-save-sheet" class="btn-action btn-orange" onclick="saveReportToSheet()">💾 리포트 저장(시트)</button>
             <button id="btn-save-note" class="btn-action btn-red" onclick="saveWrongNotesToSheet()">🔢 오답노트 저장</button>
             <button id="btn-class-analysis" class="btn-action btn-purple" onclick="analyzeClassWeakness()">📋 수업 준비 분석</button>
             
             <button id="btn-capture" class="btn-action btn-green" style="display:none;" onclick="captureReport()">📸 캡처</button>
             <button id="btn-total-report" class="btn-action btn-telegram" style="display:none;" onclick="openChartModal()">🚀 종합 리포트 전송</button>
-            <button id="btn-feedback" class="btn-action btn-orange" style="display:none;" onclick="generateFeedback()">📝 피드백 복사</button>
+        </div>
+
+        <div id="comm-panel">
+            <div style="font-size:14px; color:#a6adc8; margin-bottom:10px;">📨 메시지 전송 센터 (<span id="comm-student-name"></span>)</div>
+            
+            <div class="comm-group">
+                <span class="comm-label">👨‍👩‍👧 학부모</span>
+                <button class="btn-action btn-green" onclick="sendSMS('parent')">📱 문자 전송 (폰)</button>
+                <button class="btn-action btn-dark" onclick="copyText('parent')">📄 내용 복사</button>
+                <button class="btn-action btn-dark" onclick="copyNumber('parent')">🔢 번호 복사</button>
+            </div>
+            
+            <div class="comm-group">
+                <span class="comm-label">🎓 학생</span>
+                <button class="btn-action btn-blue" onclick="sendSMS('student')">🚀 독려 문자 (폰)</button>
+                <button class="btn-action btn-dark" onclick="copyText('student')">💬 멘트 복사</button>
+                <button class="btn-action btn-dark" onclick="copyNumber('student')">🔢 번호 복사</button>
+            </div>
         </div>
 
         <div id="view-area">
@@ -131,6 +157,9 @@
     let currentMode = 'chapter'; 
     let activeFilters = [0, 1, 2, 3]; 
     let reportTextForTelegram = ""; 
+    
+    // 현재 선택된 학생의 데이터 저장용 (통신용)
+    let selectedStudentData = { parentPhone: "", studentPhone: "", parentText: "", studentText: "" };
 
     window.onload = function() {
         fetch(GOOGLE_SCRIPT_URL + "?action=getClassList")
@@ -173,8 +202,11 @@
     function switchTab(tab) {
         currentMode = tab;
         document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+        
+        // 버튼 그룹 제어
         const chapterBtns = [document.getElementById('btn-save-sheet'), document.getElementById('btn-save-note'), document.getElementById('btn-class-analysis')];
-        const studentBtns = [document.getElementById('btn-capture'), document.getElementById('btn-total-report'), document.getElementById('btn-feedback')];
+        const studentBtns = [document.getElementById('btn-capture'), document.getElementById('btn-total-report')];
+        
         if(tab === 'chapter') {
             document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
             chapterBtns.forEach(b => b.style.display = 'flex');
@@ -186,6 +218,7 @@
         }
         document.getElementById('main-select').value = "";
         document.getElementById('report-container').innerHTML = "";
+        document.getElementById('comm-panel').style.display = 'none';
         updateSelectOptions();
     }
     
@@ -217,16 +250,24 @@
     function renderView() {
         const value = document.getElementById('main-select').value;
         const container = document.getElementById('report-container');
+        const commPanel = document.getElementById('comm-panel');
         container.innerHTML = "";
-        if(!value) return;
+        
+        if(!value) { commPanel.style.display = 'none'; return; }
+
         const titleText = currentMode === 'chapter' ? `${value} - 전체 학생 분석` : `${value} 학생 - 과제 분석 리포트`;
         document.getElementById('capture-title').innerText = titleText;
 
         if (currentMode === 'chapter') {
+            commPanel.style.display = 'none';
             const sheetData = globalDB.sheets[value];
             if (!sheetData) return;
             sheetData.forEach(student => { const card = createCard(student['이름'], student); if (card) container.innerHTML += card; });
         } else {
+            commPanel.style.display = 'block';
+            document.getElementById('comm-student-name').innerText = value;
+            prepareCommunicationData(value); 
+
             const studentName = value;
             const sheetNames = Object.keys(globalDB.sheets);
             sheetNames.forEach(sheetName => {
@@ -237,9 +278,68 @@
         }
         if(container.innerHTML === "") container.innerHTML = "<p style='text-align:center; width:100%; color:#a6adc8;'>해당 조건의 문항이 없습니다.</p>";
     }
-    
+
+    // ★ 통신 데이터 준비 (전화번호, 멘트)
+    function prepareCommunicationData(studentName) {
+        const sheetNames = Object.keys(globalDB.sheets);
+        const lastSheet = sheetNames[sheetNames.length - 1]; // 가장 최근 단원 기준
+        const sheetData = globalDB.sheets[lastSheet];
+        const student = sheetData.find(row => row['이름'] === studentName);
+        
+        if (!student) return;
+
+        selectedStudentData.studentPhone = student['학생전화'] || "";
+        selectedStudentData.parentPhone = student['학부모전화'] || "";
+        selectedStudentData.parentText = generateReportText(studentName, lastSheet, student); 
+        selectedStudentData.studentText = generateStudentMessage(studentName, lastSheet, student);
+    }
+
+    // ★ 학생 독려 멘트 생성
+    function generateStudentMessage(name, sheetName, studentData) {
+        const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
+        keys.sort((a,b)=>parseInt(a)-parseInt(b));
+        
+        let total = keys.length;
+        let doneCount = 0;
+        let remainingList = [];
+        keys.forEach(k => { if(parseInt(studentData[k])!==0) doneCount++; else remainingList.push(k); });
+        
+        let percent = total === 0 ? 0 : Math.round((doneCount/total)*100);
+        let msg = "";
+        let firstName = name.length > 2 ? name.substring(1) : name; 
+
+        if (percent === 100) {
+            msg = `${firstName}아! ${sheetName} 숙제 100% 완료라니 대박이다! 🎉\n오답 정리까지 완벽해. 오늘 푹 쉬어! 👍`;
+        } else if (percent >= 80) {
+            msg = `${firstName}아, 숙제 ${percent}%나 했네? 거의 다 했다! 😎\n남은 문제(${remainingList.slice(0,3).join(',')}번 등)만 딱 끝내고 쉬자. 화이팅! 🔥`;
+        } else {
+            msg = `${firstName}아~ ${sheetName} 숙제 아직 ${percent}%야. 😢\n우리 조금만 더 힘내서 진도 맞추자. 할 수 있지? 💪`;
+        }
+        return msg;
+    }
+
+    // ★ 전송/복사 액션
+    function sendSMS(target) {
+        let phone = target === 'parent' ? selectedStudentData.parentPhone : selectedStudentData.studentPhone;
+        let text = target === 'parent' ? selectedStudentData.parentText : selectedStudentData.studentText;
+        if (!phone) return alert("전화번호가 등록되지 않았습니다.");
+        window.location.href = `sms:${phone}?body=${encodeURIComponent(text)}`;
+    }
+
+    function copyText(target) {
+        let text = target === 'parent' ? selectedStudentData.parentText : selectedStudentData.studentText;
+        navigator.clipboard.writeText(text).then(() => alert("📋 내용이 복사되었습니다!"));
+    }
+
+    function copyNumber(target) {
+        let phone = target === 'parent' ? selectedStudentData.parentPhone : selectedStudentData.studentPhone;
+        if(!phone) return alert("전화번호 없음");
+        navigator.clipboard.writeText(phone).then(() => alert("🔢 전화번호가 복사되었습니다!"));
+    }
+
+    // ★ 카드 생성 (특수 열 제외)
     function createCard(title, dataObj) {
-        const keys = Object.keys(dataObj).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+        const keys = Object.keys(dataObj).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
         let total = keys.length; let correct = 0; let filteredItems = [];
         keys.forEach(k => {
             let val = parseInt(dataObj[k]) || 0;
@@ -251,6 +351,62 @@
         return `<div class="report-card"><div class="card-header"><span>${title}</span><span>${percent}%</span></div><div class="item-list">${filteredItems.map(item => `<span class="item item-${item.val}">${item.num}</span>`).join('')}</div></div>`;
     }
 
+    // ★ 학부모 리포트 생성 (점수 자동 계산)
+    function generateReportText(name, sheetName, studentData) {
+        const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
+        keys.sort((a, b) => parseInt(a) - parseInt(b));
+
+        let rawInput = studentData['복습테스트'];
+        let testDisplay = "   점 (  /6)";
+        if (rawInput !== undefined && rawInput !== "") {
+            let correctCount = parseInt(rawInput);
+            if (!isNaN(correctCount)) {
+                let wrongCount = 6 - correctCount;
+                let score = 100 - (wrongCount * 5);
+                if (score < 0) score = 0; 
+                testDisplay = `${score}점 (${correctCount}/6)`;
+            }
+        }
+
+        let total = keys.length;
+        let doneCount = 0;
+        let remainingList = [];
+        let fixedList = [];
+
+        keys.forEach(k => {
+            let val = parseInt(studentData[k]) || 0;
+            if (val !== 0) doneCount++; 
+            else remainingList.push(k + "번"); 
+            if (val === 3) fixedList.push(k + "번");
+        });
+
+        let percent = total === 0 ? 0 : Math.round((doneCount / total) * 100);
+        let comment = "";
+        if (percent === 100) comment = "성실하게 모든 과제를 완료했습니다. 오답 정리까지 훌륭합니다! 가정에서도 많은 칭찬 부탁드립니다.";
+        else if (percent >= 90) comment = "대부분의 과제를 잘 수행했습니다. 남은 몇 문항만 마무리하면 완벽합니다.";
+        else if (percent >= 70) comment = "과제 수행이 원활합니다. 다만, 남은 문항들은 이번 주말을 이용해 마무리할 수 있도록 지도 부탁드립니다.";
+        else if (percent >= 50) comment = "과제 완료율이 다소 낮습니다. 학습 공백이 생기지 않도록 가정에서도 남은 문제 풀이를 독려해 주시면 감사하겠습니다.";
+        else comment = "현재 과제 미흡으로 학습 결손이 우려됩니다. 학생이 수업 진도를 잘 따라갈 수 있도록 가정에서의 각별한 관심과 지도가 필요합니다.";
+
+        let text = `[조창성T 수학 알림]\n`;
+        text += `${name} 학생 - ${sheetName}\n`;
+        text += `복습테스트: ${testDisplay}\n`; 
+        text += `숙제 완료율: ${percent}% (${doneCount}/${total})\n`;
+        
+        if (remainingList.length > 0) {
+            if(remainingList.length > 15) text += `남은 문제: ${remainingList.slice(0, 15).join(', ')} 외 ${remainingList.length - 15}문항\n`;
+            else text += `남은 문제: ${remainingList.join(', ')}\n`;
+        } else { text += `남은 문제: 없음 (완료)\n`; }
+
+        if (fixedList.length > 0) {
+            if(fixedList.length > 15) text += `오답 완료: ${fixedList.slice(0, 15).join(', ')} 외 ${fixedList.length - 15}문항\n`;
+            else text += `오답 완료: ${fixedList.join(', ')}\n`;
+        }
+        text += `${comment}`;
+        return text;
+    }
+
+    // ★ 시트 저장
     function saveReportToSheet() {
         const sheetName = document.getElementById('main-select').value;
         if (!sheetName) return alert("단원을 선택해주세요.");
@@ -260,13 +416,14 @@
         sendBatchData("saveReportBatch", sheetName, reports);
     }
 
+    // ★ 오답노트 저장
     function saveWrongNotesToSheet() {
         const sheetName = document.getElementById('main-select').value;
         if (!sheetName) return alert("단원을 선택해주세요.");
         if (!confirm(`현재 필터링된 문항 번호를\n'오답노트' 열에 저장하시겠습니까?`)) return;
         const sheetData = globalDB.sheets[sheetName];
         let reports = sheetData.map(student => {
-            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
             let notes = keys.filter(k => activeFilters.includes(parseInt(student[k]) || 0));
             notes.sort((a,b) => parseInt(a) - parseInt(b));
             return { name: student['이름'], text: notes.join(", ") };
@@ -288,8 +445,64 @@
         .catch(err => { document.getElementById('loader').style.display = 'none'; alert("서버 오류: " + err); });
     }
 
+    // ★ 수업 준비 분석
+    function analyzeClassWeakness() {
+        const sheetName = document.getElementById('main-select').value;
+        if (!sheetName) return alert("단원을 선택해주세요.");
+        const sheetData = globalDB.sheets[sheetName];
+        let totalStudents = sheetData.length;
+        let qStats = {};
+        sheetData.forEach(student => {
+            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
+            keys.forEach(k => {
+                if(!qStats[k]) qStats[k] = { wrong: 0, none: 0, totalBad: 0 };
+                let val = parseInt(student[k]) || 0;
+                if(val === 2) qStats[k].wrong++;
+                if(val === 0) qStats[k].none++;
+                if(val === 0 || val === 2) qStats[k].totalBad++;
+            });
+        });
+        let sortedQs = Object.keys(qStats).map(k => ({ num: k, ...qStats[k] }));
+        sortedQs.sort((a, b) => b.totalBad - a.totalBad);
+        let text = `[${currentClassName} - ${sheetName}] 수업 준비 분석\n*총원: ${totalStudents}명*\n\n`;
+        let urgent = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.5);
+        let warning = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.3 && (q.totalBad/totalStudents) < 0.5);
+        if(urgent.length > 0) { text += `🚨 최우선 해설 (오답률 50%↑)\n`; urgent.forEach(q => { text += `${q.num}번 (${q.totalBad}명) - 미완료${q.none}, 틀림${q.wrong}\n`; }); }
+        else if (warning.length > 0) { text += `⚠️ 주의 문항 (오답률 30%↑)\n`; warning.forEach(q => { text += `${q.num}번 (${q.totalBad}명)\n`; }); }
+        else { text += `👍 특별히 취약한 공통 문항이 없습니다.\n`; }
+        
+        text += `\n--------------------------------\n🎯 나만 틀린 문제 (개별 지도용)\n*본인 포함 2명 이하 오답 문항*\n\n`;
+        let hasPersonalData = false;
+        sheetData.forEach(student => {
+            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
+            keys.sort((a,b) => parseInt(a) - parseInt(b));
+            let myUniqueErrors = [];
+            keys.forEach(k => {
+                let val = parseInt(student[k]) || 0;
+                if ((val === 0 || val === 2) && qStats[k].totalBad <= 2) { myUniqueErrors.push(`${k}번(${qStats[k].totalBad})`); }
+            });
+            if (myUniqueErrors.length > 0) { hasPersonalData = true; text += `${student['이름']}: ${myUniqueErrors.join(', ')}\n`; }
+        });
+        if (!hasPersonalData) text += "(해당 사항 없음)";
+        navigator.clipboard.writeText(text).then(() => alert("📋 수업 분석 리포트가 복사되었습니다!"));
+    }
+
+    function captureReport() {
+        const captureArea = document.getElementById('capture-area');
+        const header = document.getElementById('capture-header');
+        if(!document.getElementById('main-select').value) return alert("대상을 선택해주세요!");
+        header.style.display = 'block';
+        html2canvas(captureArea, { backgroundColor: "#1e1e2e", scale: 2 }).then(canvas => {
+            header.style.display = 'none';
+            const link = document.createElement('a');
+            link.download = document.getElementById('main-select').value + '_분석리포트.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        });
+    }
+
+    // ★ 그래프 모달 & 텔레그램
     let chartInstance = null;
-    
     function openChartModal() {
         const name = document.getElementById('main-select').value;
         if(!name) return alert("학생을 선택해주세요.");
@@ -305,13 +518,13 @@
         const dataGray = [];
 
         sheetNames.forEach(sName => {
-            labels.push(sName.replace(/\[|\]/g, '')); 
+            labels.push(sName.replace(/\[|\]/g, ''));
             const sData = globalDB.sheets[sName];
             const myRow = sData.find(r => r['이름'] === name);
             
             let g=0, b=0, r=0, w=0;
             if(myRow) {
-                const keys = Object.keys(myRow).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+                const keys = Object.keys(myRow).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
                 keys.forEach(k => {
                     let v = parseInt(myRow[k]) || 0;
                     if(v===1) g++; else if(v===3) b++; else if(v===2) r++; else w++;
@@ -349,7 +562,6 @@
                                     var total = dataGreen[index] + dataBlue[index] + dataRed[index] + dataGray[index];
                                     var correct = dataGreen[index] + dataBlue[index];
                                     var percent = total === 0 ? 0 : Math.round((correct / total) * 100);
-                                    
                                     ctx.fillStyle = '#1e1e2e';
                                     ctx.font = Chart.helpers.fontString(12, 'bold', 'Pretendard');
                                     var dataString = percent + "%";
@@ -395,6 +607,7 @@
     }
 
     function generateComprehensiveText(name) {
+        // (종합 분석 로직 - 특수 열 제외하고 계산)
         const sheetNames = Object.keys(globalDB.sheets);
         let greenList = [], blueList = [], redCandidates = [];
         
@@ -402,7 +615,7 @@
             const sData = globalDB.sheets[sName];
             let totalGreen=0, totalBlue=0, totalItems=0;
             sData.forEach(row => {
-                const keys = Object.keys(row).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+                const keys = Object.keys(row).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
                 keys.forEach(k => { let v = parseInt(row[k])||0; totalItems++; if(v===1) totalGreen++; if(v===3) totalBlue++; });
             });
             let avgGreenRate = totalItems===0?0:(totalGreen/totalItems)*100;
@@ -410,7 +623,7 @@
             
             const myRow = sData.find(r => r['이름'] === name);
             if(myRow) {
-                const keys = Object.keys(myRow).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
+                const keys = Object.keys(myRow).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '학생전화' && k !== '학부모전화' && k !== '복습테스트');
                 let myGreen=0, myBlue=0, myTotal=0;
                 keys.forEach(k => { let v = parseInt(myRow[k])||0; myTotal++; if(v===1) myGreen++; if(v===3) myBlue++; });
                 if(myTotal>0) {
@@ -443,185 +656,6 @@
         if(isPerfect) text += `💎 완벽함 (약점 없음)\n`;
         else if(redList.length>0) text += `🔴 보완필요: ${redList.map(i=>i.name).join(', ')}\n`;
         
-        return text;
-    }
-
-    function generateComprehensiveReport() {
-        const name = document.getElementById('main-select').value;
-        if(!name) return alert("학생을 선택해주세요.");
-        let text = generateComprehensiveText(name);
-        navigator.clipboard.writeText(text).then(() => alert("📋 텍스트 복사 완료! (그래프 전송은 🚀버튼을 누르세요)"));
-    }
-
-    function captureReport() {
-        const captureArea = document.getElementById('capture-area');
-        const header = document.getElementById('capture-header');
-        if(!document.getElementById('main-select').value) return alert("대상을 선택해주세요!");
-        header.style.display = 'block';
-        html2canvas(captureArea, { backgroundColor: "#1e1e2e", scale: 2 }).then(canvas => {
-            header.style.display = 'none';
-            const link = document.createElement('a');
-            link.download = document.getElementById('main-select').value + '_분석리포트.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        });
-    }
-
-    // ★★★ [업그레이드] 수업 준비 분석 (공통 오답 + 개인별 희귀 오답) ★★★
-    function analyzeClassWeakness() {
-        const sheetName = document.getElementById('main-select').value;
-        if (!sheetName) return alert("단원을 선택해주세요.");
-
-        const sheetData = globalDB.sheets[sheetName];
-        let totalStudents = sheetData.length;
-        
-        // 1단계: 문항별 오답자 수 전수 조사 (Global Stats)
-        let qStats = {}; // { "1": {wrong:0, none:0, totalBad:0}, ... }
-        
-        sheetData.forEach(student => {
-            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
-            keys.forEach(k => {
-                if(!qStats[k]) qStats[k] = { wrong: 0, none: 0, totalBad: 0 };
-                
-                let val = parseInt(student[k]) || 0;
-                // 틀림(2) 또는 안품(0)인 경우 집계
-                if(val === 2) qStats[k].wrong++;
-                if(val === 0) qStats[k].none++;
-                if(val === 0 || val === 2) qStats[k].totalBad++;
-            });
-        });
-
-        // 2단계: 공통 취약점 분석 (기존 기능)
-        let sortedQs = Object.keys(qStats).map(k => ({ num: k, ...qStats[k] }));
-        sortedQs.sort((a, b) => b.totalBad - a.totalBad); // 많이 틀린 순 정렬
-
-        let text = `[${currentClassName} - ${sheetName}] 수업 준비 분석\n*총원: ${totalStudents}명*\n\n`;
-        
-        let urgent = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.5);
-        let warning = sortedQs.filter(q => (q.totalBad/totalStudents) >= 0.3 && (q.totalBad/totalStudents) < 0.5);
-
-        text += `📊 공통 오답 분석 (판서 추천)\n`;
-        if(urgent.length > 0) {
-            text += `🚨 최우선 해설 (오답률 50%↑)\n`;
-            urgent.forEach(q => { text += `${q.num}번 (${q.totalBad}명) - 미완료${q.none}, 틀림${q.wrong}\n`; });
-        } else if (warning.length > 0) {
-            text += `⚠️ 주의 문항 (오답률 30%↑)\n`;
-            warning.forEach(q => { text += `${q.num}번 (${q.totalBad}명)\n`; });
-        } else {
-            text += `👍 특별히 취약한 공통 문항이 없습니다.\n`;
-        }
-
-        // 3단계: 나만 틀린 문제 분석 (New!)
-        // 기준: 해당 문제를 틀린(0 or 2) 사람이 2명 이하인 경우
-        text += `\n--------------------------------\n`;
-        text += `🎯 나만 틀린 문제 (개별 지도용)\n`;
-        text += `*본인 포함 2명 이하 오답 문항 (괄호 안은 오답자 수)*\n\n`;
-
-        let hasPersonalData = false;
-
-        sheetData.forEach(student => {
-            const keys = Object.keys(student).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트');
-            // 문항 번호 순 정렬
-            keys.sort((a,b) => parseInt(a) - parseInt(b));
-
-            let myUniqueErrors = []; // 나만 틀린 문제 리스트
-
-            keys.forEach(k => {
-                let val = parseInt(student[k]) || 0;
-                // 내가 틀렸거나 안 풀었는데 (0 or 2)
-                if (val === 0 || val === 2) {
-                    // 전체 오답자 수가 2명 이하라면
-                    if (qStats[k].totalBad <= 2) {
-                        myUniqueErrors.push(`${k}번(${qStats[k].totalBad})`);
-                    }
-                }
-            });
-
-            if (myUniqueErrors.length > 0) {
-                hasPersonalData = true;
-                text += `${student['이름']}: ${myUniqueErrors.join(', ')}\n`;
-            }
-        });
-
-        if (!hasPersonalData) text += "(해당 사항 없음 - 모두가 잘했거나, 모두가 같이 틀렸습니다.)";
-
-        navigator.clipboard.writeText(text).then(() => alert("📋 수업 분석 리포트가 복사되었습니다!"));
-    }
-
-    function generateFeedback() {
-        const name = document.getElementById('main-select').value;
-        const sheetName = Object.keys(globalDB.sheets).pop(); 
-        const sheetData = globalDB.sheets[sheetName];
-        const student = sheetData.find(row => row['이름'] === name);
-        if(!student) return alert("데이터 없음");
-        navigator.clipboard.writeText(generateReportText(name, sheetName, student)).then(() => alert("📝 피드백 복사 완료!"));
-    }
-// ★★★ [최종] 점수 자동 계산(100점 만점 -5점 감점) 포함 리포트 ★★★
-    function generateReportText(name, sheetName, studentData) {
-        // '복습테스트' 등 특수 열 제외하고 문항만 추출
-        const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '복습테스트');
-        keys.sort((a, b) => parseInt(a) - parseInt(b));
-
-        // ★★★ [점수 계산 로직] ★★★
-        let rawInput = studentData['복습테스트']; // 시트에 적힌 값 (맞은 개수)
-        let testDisplay = "   점 (  /6)"; // 기본값 (빈칸)
-
-        if (rawInput !== undefined && rawInput !== "") {
-            let correctCount = parseInt(rawInput); // 맞은 개수 (예: 5)
-            
-            // 숫자가 맞는지 확인
-            if (!isNaN(correctCount)) {
-                let wrongCount = 6 - correctCount; // 틀린 개수 (6 - 5 = 1)
-                let score = 100 - (wrongCount * 5); // 점수 (100 - 5 = 95)
-                
-                // 음수가 나오지 않게 처리 (혹시 모를 오타 방지)
-                if (score < 0) score = 0; 
-                
-                testDisplay = `${score}점 (${correctCount}/6)`;
-            }
-        }
-
-        let total = keys.length;
-        let doneCount = 0;
-        let remainingList = [];
-        let fixedList = [];
-
-        keys.forEach(k => {
-            let val = parseInt(studentData[k]) || 0;
-            if (val !== 0) doneCount++; 
-            else remainingList.push(k + "번"); 
-            if (val === 3) fixedList.push(k + "번");
-        });
-
-        let percent = total === 0 ? 0 : Math.round((doneCount / total) * 100);
-
-        let comment = "";
-        if (percent === 100) comment = "성실하게 모든 과제를 완료했습니다. 오답 정리까지 훌륭합니다! 가정에서도 많은 칭찬 부탁드립니다.";
-        else if (percent >= 90) comment = "대부분의 과제를 잘 수행했습니다. 남은 몇 문항만 마무리하면 완벽합니다.";
-        else if (percent >= 70) comment = "과제 수행이 원활합니다. 다만, 남은 문항들은 이번 주말을 이용해 마무리할 수 있도록 지도 부탁드립니다.";
-        else if (percent >= 50) comment = "과제 완료율이 다소 낮습니다. 학습 공백이 생기지 않도록 가정에서도 남은 문제 풀이를 독려해 주시면 감사하겠습니다.";
-        else comment = "현재 과제 미흡으로 학습 결손이 우려됩니다. 학생이 수업 진도를 잘 따라갈 수 있도록 가정에서의 각별한 관심과 지도가 필요합니다.";
-
-        let text = `[조창성T 수학 알림]\n`;
-        text += `${name} 학생 - ${sheetName}\n`;
-        // ★ 계산된 점수 출력
-        text += `복습테스트: ${testDisplay}\n`; 
-        text += `숙제 완료율: ${percent}% (${doneCount}/${total})\n`;
-        
-        if (remainingList.length > 0) {
-            if(remainingList.length > 15) text += `남은 문제: ${remainingList.slice(0, 15).join(', ')} 외 ${remainingList.length - 15}문항\n`;
-            else text += `남은 문제: ${remainingList.join(', ')}\n`;
-        } else {
-            text += `남은 문제: 없음 (완료)\n`;
-        }
-
-        if (fixedList.length > 0) {
-            if(fixedList.length > 15) text += `오답 완료: ${fixedList.slice(0, 15).join(', ')} 외 ${fixedList.length - 15}문항\n`;
-            else text += `오답 완료: ${fixedList.join(', ')}\n`;
-        }
-
-        text += `${comment}`;
-
         return text;
     }
 </script>
