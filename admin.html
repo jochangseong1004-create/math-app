@@ -556,15 +556,30 @@
         if(!student) return alert("데이터 없음");
         navigator.clipboard.writeText(generateReportText(name, sheetName, student)).then(() => alert("📝 피드백 복사 완료!"));
     }
-// ★★★ [업그레이드] 점수 자동 연동 리포트 ★★★
+// ★★★ [최종] 점수 자동 계산(100점 만점 -5점 감점) 포함 리포트 ★★★
     function generateReportText(name, sheetName, studentData) {
-        // '복습테스트'는 문항 분석에서 제외
+        // '복습테스트' 등 특수 열 제외하고 문항만 추출
         const keys = Object.keys(studentData).filter(k => k !== '이름' && k !== '비번' && k !== 'rowIndex' && k !== '전화번호' && k !== '리포트' && k !== '오답노트' && k !== '복습테스트');
         keys.sort((a, b) => parseInt(a) - parseInt(b));
 
-        // ★ 시트에 입력된 점수 가져오기 (없으면 빈칸)
-        let score = studentData['복습테스트'];
-        if (score === undefined || score === "") score = "  "; // 점수 없으면 공란
+        // ★★★ [점수 계산 로직] ★★★
+        let rawInput = studentData['복습테스트']; // 시트에 적힌 값 (맞은 개수)
+        let testDisplay = "   점 (  /6)"; // 기본값 (빈칸)
+
+        if (rawInput !== undefined && rawInput !== "") {
+            let correctCount = parseInt(rawInput); // 맞은 개수 (예: 5)
+            
+            // 숫자가 맞는지 확인
+            if (!isNaN(correctCount)) {
+                let wrongCount = 6 - correctCount; // 틀린 개수 (6 - 5 = 1)
+                let score = 100 - (wrongCount * 5); // 점수 (100 - 5 = 95)
+                
+                // 음수가 나오지 않게 처리 (혹시 모를 오타 방지)
+                if (score < 0) score = 0; 
+                
+                testDisplay = `${score}점 (${correctCount}/6)`;
+            }
+        }
 
         let total = keys.length;
         let doneCount = 0;
@@ -589,8 +604,8 @@
 
         let text = `[조창성T 수학 알림]\n`;
         text += `${name} 학생 - ${sheetName}\n`;
-        // ★ 자동으로 가져온 점수 넣기
-        text += `복습테스트: ${score}점 (/6)\n`; 
+        // ★ 계산된 점수 출력
+        text += `복습테스트: ${testDisplay}\n`; 
         text += `숙제 완료율: ${percent}% (${doneCount}/${total})\n`;
         
         if (remainingList.length > 0) {
