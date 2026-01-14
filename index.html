@@ -66,7 +66,29 @@
         .q-num { font-size:11px; font-weight:600; margin-bottom:4px; white-space: nowrap; } 
         .q-icon { font-size:24px; }
         
-        .loader-wrapper { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; display:none; justify-content:center; align-items:center; border-radius:var(--radius-L); }
+        /* [수정] flex-direction: column; 추가 (세로 정렬) */
+.loader-wrapper { 
+    position:absolute; top:0; left:0; width:100%; height:100%; 
+    background:rgba(255,255,255,0.9); /* 배경을 좀 더 불투명하게(0.8->0.9) 해서 글자가 잘 보이게 */
+    z-index:2000; display:none; 
+    justify-content:center; align-items:center; 
+    border-radius:var(--radius-L); 
+    flex-direction: column; /* ★ 스피너와 글자를 위아래로 배치 */
+}
+
+/* [추가] 로딩 멘트 스타일 */
+.loading-text {
+    margin-top: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--toss-text-dark);
+    text-align: center;
+    line-height: 1.5;
+    animation: pulse 1.5s infinite ease-in-out; /* 깜빡이는 효과 (선택사항) */
+}
+
+/* (선택사항) 글자가 은은하게 깜빡이는 애니메이션 */
+@keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
         .loader { border:4px solid #f3f3f3; border-top:4px solid var(--toss-blue); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; }
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
         .chart-container { width:65%; margin:0 auto 20px auto; position:relative; }
@@ -83,7 +105,10 @@
 </head>
 <body>
 <div class="container">
-    <div id="global-loader" class="loader-wrapper"><div class="loader"></div></div>
+<div id="global-loader" class="loader-wrapper">
+    <div class="loader"></div>
+    <div class="loading-text">잠시만 기다려 주세요.<br>데이터를 가져오는 중입니다.</div>
+</div>
     <h2>📊 조창성T 수학 과제 분석</h2>
     <div id="screen-login" class="screen active">
         <p style="text-align:center; color:var(--toss-text-gray); margin-bottom:5px;">수업을 선택하고 로그인하세요</p>
