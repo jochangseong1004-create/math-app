@@ -15,7 +15,7 @@
             margin:0; padding:20px; 
             color:var(--toss-text-dark); 
             -webkit-tap-highlight-color:transparent;
-            overscroll-behavior-y: contain; /* 새로고침 방지 */
+            overscroll-behavior-y: contain;
         }
 
         .container { max-width:600px; margin:0 auto; background:white; padding:30px 24px; border-radius:var(--radius-L); box-shadow:var(--card-shadow); min-height:85vh; position:relative; }
@@ -133,8 +133,6 @@
 
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
-    
-    // 무시해야 할 열 목록
     const EXCLUDED_KEYS = ['이름', '비번', 'rowIndex', '전화번호', '리포트', '오답노트', '학생전화', '학부모전화', '복습테스트'];
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -163,9 +161,8 @@
     let tempChanges = {}; 
     let allChapters = []; 
     let myChart = null; 
-    let currentClassData = []; // 현재 보고 있는 단원의 전체 학생 데이터
-    
-    // ★★★ [핵심] 데이터 캐시 저장소 (여기에 불러온 단원 정보를 저장함)
+    let currentClassData = []; 
+    // ★★★ 모든 데이터를 저장하는 캐시 저장소
     let sheetCache = {}; 
 
     const ICONS = ["⚪", "🟢", "🔴", "✅"]; const CLASS_NAMES = ["status-0", "status-1", "status-2", "status-3"];
@@ -185,19 +182,22 @@
         userCredentials.name = name; 
         userCredentials.pw = pw; 
         
-        // 로그인 시에는 캐시 초기화 (새로운 수업일 수 있으므로)
-        sheetCache = {};
+        sheetCache = {}; // 로그인 시 캐시 초기화
 
         toggleLoader(true); 
         fetch(GOOGLE_SCRIPT_URL + "?action=loginAndGetChapters&className=" + encodeURIComponent(cls) + "&name=" + encodeURIComponent(name) + "&pw=" + encodeURIComponent(pw))
         .then(async (res) => { if (!res.ok) throw new Error("서버 연결 실패"); return res.json(); })
         .then(data => { 
             toggleLoader(false); 
-            if (!data || data.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } 
-            allChapters = data; 
+            // ★★★ 서버가 보낸 '보따리(chapters + cacheData)' 풀기
+            if (!data.chapters || data.chapters.length === 0) { alert("학생 정보를 찾을 수 없습니다."); return; } 
+            
+            allChapters = data.chapters; 
+            sheetCache = data.cacheData; // ★ 전체 데이터 캐시에 저장!
+            
             document.getElementById('chapter-title').innerText = `[${cls}] 학습할 단원 선택`;
             showScreen('screen-chapter'); 
-            setupClassFilter(data); 
+            setupClassFilter(allChapters); 
             filterChapters(); 
         }).catch(err => { toggleLoader(false); alert("오류: " + err.message); }); 
     }
@@ -205,35 +205,21 @@
     function setupClassFilter(chapters) { const filter = document.getElementById('class-filter'); filter.innerHTML = '<option value="all">전체 수업 보기</option>'; const classes = new Set(); chapters.forEach(chap => { const match = chap.name.match(/^\[(.*?)\]/); if (match) classes.add(match[0]); }); classes.forEach(cls => { const option = document.createElement('option'); option.value = cls; option.innerText = cls.replace(/[\[\]]/g, "") + " 수업"; filter.appendChild(option); }); }
     function filterChapters() { const selectedClass = document.getElementById('class-filter').value; const list = document.getElementById('chapter-list'); list.innerHTML = ""; allChapters.forEach(chap => { if (selectedClass === "all" || chap.name.startsWith(selectedClass)) { const btn = document.createElement('button'); btn.className = 'chapter-btn'; const safeTier = chap.tier || "IRON"; const safePercent = chap.percent || 0; const tierIcon = TIER_ICONS[safeTier] || "🛡️"; btn.innerHTML = `<span class="chap-name">${chap.name.replace(selectedClass === "all" ? "" : selectedClass, "")}</span><span class="chap-stat">${safePercent}% <span class="stat-icon">${tierIcon}</span></span>`; btn.onclick = () => loadGame(chap.name); list.appendChild(btn); } }); }
     
-    // ★★★ [수정됨] 단원 로딩 (캐시 우선 확인) ★★★
+    // ★★★ [수정됨] 이제 loadGame은 무조건 캐시에서만 데이터를 가져옴 (서버 통신 X)
     function loadGame(sheetName) { 
         currentSheetName = sheetName; 
         history.pushState({page: 'game'}, document.title, "#game"); 
         
-        // 1. 캐시(메모리)에 데이터가 있는지 확인
         if (sheetCache[sheetName]) {
             currentClassData = sheetCache[sheetName]; 
-            renderGameUI(sheetName); // 화면 그리기 (함수 분리함)
-            return;
+            renderGameUI(sheetName); 
+        } else {
+            // 만약 캐시에 없다면 (혹시 모를 오류 대비) 비상 로딩
+            alert("데이터를 불러오는 중 문제가 발생했습니다. 다시 로그인해주세요.");
+            location.reload();
         }
-
-        // 2. 캐시에 없으면 서버 호출
-        toggleLoader(true); 
-        const timestamp = new Date().getTime(); 
-        const requestUrl = GOOGLE_SCRIPT_URL + "?action=getData&className=" + encodeURIComponent(userCredentials.className) + "&sheetName=" + encodeURIComponent(sheetName) + "&t=" + timestamp; 
-        
-        fetch(requestUrl).then(res => res.json()).then(data => { 
-            toggleLoader(false); 
-            
-            // 데이터 캐시에 저장!
-            sheetCache[sheetName] = data;
-            currentClassData = data; 
-            
-            renderGameUI(sheetName);
-        }).catch(err => { toggleLoader(false); alert("로딩 실패: " + err.message); }); 
     }
 
-    // ★★★ [신규] 게임 화면 그리기 로직 (loadGame에서 분리) ★★★
     function renderGameUI(sheetName) {
         const user = currentClassData.find(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw); 
         if (user) { 
@@ -361,7 +347,6 @@
         filterChapters(); 
     }
 
-    // ★★★ [수정됨] 저장 후 서버 재접속 방지 (로컬 캐시 갱신) ★★★
     function saveData(exitMode = false) {
         const statusDiv = document.getElementById('save-status');
         const keysToSave = Object.keys(tempChanges);
@@ -408,14 +393,11 @@
         .then(json => {
             if (json.status !== "success") { toggleLoader(false); throw new Error(json.message || "저장 실패"); }
             
-            // 1. 성공했으면, tempChanges의 내용을 캐시(sheetCache)와 현재 데이터(currentClassData)에 반영
-            // (서버에서 다시 불러오지 않아도 됨!)
+            // ★★★ [성공 시 로컬 캐시 갱신]
             if (currentClassData) {
                 let userIndex = currentClassData.findIndex(row => String(row['이름']) === userCredentials.name && String(row['비번']) === userCredentials.pw);
                 if (userIndex !== -1) {
-                    // 로컬 데이터 업데이트
                     currentClassData[userIndex] = { ...currentClassData[userIndex], ...tempChanges };
-                    // 캐시 업데이트
                     if (sheetCache[currentSheetName]) {
                         sheetCache[currentSheetName] = currentClassData;
                     }
@@ -432,7 +414,6 @@
                 exitWithoutSave(); 
             } else { 
                 toggleLoader(false); 
-                // ★ 서버 재호출(loadGame) 대신 로컬 UI만 갱신
                 renderGameUI(currentSheetName); 
             }
         })
