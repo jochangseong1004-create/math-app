@@ -1,3 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>조창성T 수학 과제 분석</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --toss-blue:#0064FF; --toss-bg:#F2F4F6; --toss-text-dark:#191F28; --toss-text-gray:#8B95A1; --card-shadow:0 4px 20px rgba(0,0,0,0.05); --radius-L:24px; --radius-M:16px; }
+        
+        body { 
+            font-family:"Pretendard Variable",Pretendard,-apple-system,sans-serif; 
+            background-color:var(--toss-bg); 
+            margin:0; padding:20px; 
+            color:var(--toss-text-dark); 
+            -webkit-tap-highlight-color:transparent;
+            overscroll-behavior-y: contain; /* 새로고침 방지 */
+        }
+
+        .container { max-width:600px; margin:0 auto; background:white; padding:30px 24px; border-radius:var(--radius-L); box-shadow:var(--card-shadow); min-height:85vh; position:relative; }
+        h2, h3 { text-align:center; color:var(--toss-text-dark); margin-bottom:20px; font-weight:700; }
+        button { font-family:inherit; transition:all 0.1s ease; cursor:pointer; } button:active { transform:scale(0.96); }
+        button.primary, button.analyze { width:100%; padding:16px; border:none; border-radius:var(--radius-M); font-size:17px; font-weight:600; margin-top:12px; }
+        button.primary { background-color:var(--toss-blue); color:white; } button.analyze { background-color:#E8F3FF; color:var(--toss-blue); }
+        input, select, textarea { width:100%; padding:16px; margin-bottom:12px; border:none; background-color:#F9FAFB; border-radius:var(--radius-M); font-size:17px; font-family:inherit; box-sizing:border-box; }
+        input:focus, select:focus, textarea:focus { outline:2px solid var(--toss-blue); background:white; }
+        textarea { resize:none; height:100px; font-size:15px; }
+        textarea::placeholder { color: #ADB5BD; line-height: 1.5; }
+        .screen { display:none; flex-direction:column; } .active { display:flex; }
+        
+        .chapter-btn { display:flex; justify-content:space-between; align-items:center; width:100%; padding:18px 20px; background:white; border:1px solid #F2F4F6; border-radius:16px; margin-bottom:10px; box-shadow:0 2px 8px rgba(0,0,0,0.03); text-align:left; }
+        .chapter-btn:hover { background-color:#F9FAFB; }
+        .chap-name { font-size:17px; font-weight:600; color:#191F28; } .chap-stat { font-size:15px; font-weight:600; color:#6B7684; display:flex; align-items:center; gap:8px; } .stat-icon { font-size:20px; }
+        
+        .tier-badge { display:flex; flex-direction:column; align-items:center; justify-content:center; margin-bottom:24px; padding:24px 20px; border-radius:20px; background:white; border:2px solid #ddd; box-shadow:0 10px 30px rgba(0,0,0,0.05); transition:0.3s; }
+        .tier-row { display:flex; align-items:center; justify-content:center; margin-bottom:10px; }
+        .tier-icon { font-size:40px; margin-right:10px; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
+        .tier-name { font-size:26px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; }
+        .rank-text { font-size:14px; font-weight:600; color:var(--toss-text-gray); background:#F2F4F6; padding:6px 14px; border-radius:20px; margin-bottom:15px; }
+        .tier-progress-bg { width:100%; height:8px; background:#F2F4F6; border-radius:4px; overflow:hidden; }
+        .tier-progress-fill { height:100%; background:#ddd; width:0%; border-radius:4px; transition:width 0.5s ease; }
+        
+        .tier-iron { border-color:#585858; color:#585858; } .tier-iron .tier-progress-fill { background:#585858; }
+        .tier-bronze { border-color:#cd7f32; color:#cd7f32; } .tier-bronze .tier-progress-fill { background:#cd7f32; }
+        .tier-silver { border-color:#7f8c8d; color:#7f8c8d; } .tier-silver .tier-progress-fill { background:#7f8c8d; }
+        .tier-gold { border-color:#FFB300; color:#FFB300; } .tier-gold .tier-progress-fill { background:#FFB300; }
+        .tier-platinum { border-color:#00b894; color:#00b894; } .tier-platinum .tier-progress-fill { background:#00b894; }
+        .tier-diamond { border-color:#00CEC9; color:#00CEC9; } .tier-diamond .tier-progress-fill { background:#00CEC9; }
+        .tier-challenger { border:3px solid transparent; background-image:linear-gradient(white, white), linear-gradient(to right, #fbc2eb, #a6c1ee); background-origin:border-box; background-clip:content-box, border-box; }
+        .tier-challenger .tier-name { background:linear-gradient(to right, #fbc2eb, #a6c1ee); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+        .tier-challenger .tier-progress-fill { background:linear-gradient(to right, #fbc2eb, #a6c1ee); }
+        
+        .filter-options { display:flex; justify-content:center; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+        .filter-label { font-size:14px; cursor:pointer; display:flex; align-items:center; gap:6px; padding:8px 12px; background:#F9FAFB; border-radius:20px; color:var(--toss-text-gray); transition:0.2s; font-weight:500; }
+        .filter-label:has(input:checked) { background-color:#E8F3FF; color:var(--toss-blue); font-weight:700; }
+        
+        .grid-container { display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin-bottom:24px; padding-bottom: 20px; }
+        .grid-item { aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color:white; border-radius:var(--radius-M); border:none; box-shadow:0 2px 8px rgba(0,0,0,0.05); transition:all 0.2s; }
+        .grid-item.hidden { display:none; }
+        .status-0 { background-color:white; color:var(--toss-text-gray); }
+        .status-1 { background-color:#E3FCEF; color:#00A86B; box-shadow:inset 0 0 0 2px #00A86B; }
+        .status-2 { background-color:#FFEBEB; color:#E31A1A; box-shadow:inset 0 0 0 2px #E31A1A; }
+        .status-3 { background-color:#f0fff4; color:#218c74; box-shadow:inset 0 0 0 2px #218c74; background-image:repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(33, 140, 116, 0.1) 5px, rgba(33, 140, 116, 0.1) 10px); }
+        
+        .q-num { font-size:11px; font-weight:600; margin-bottom:4px; white-space: nowrap; } 
+        .q-icon { font-size:24px; }
+        
+        .loader-wrapper { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:2000; display:none; justify-content:center; align-items:center; border-radius:var(--radius-L); }
+        .loader { border:4px solid #f3f3f3; border-top:4px solid var(--toss-blue); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite; }
+        @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+        .chart-container { width:65%; margin:0 auto 20px auto; position:relative; }
+        
+        .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; justify-content:center; align-items:center; backdrop-filter:blur(3px); }
+        .modal-content { background:white; padding:28px; border-radius:var(--radius-L); width:85%; max-width:350px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.2); }
+        .analysis-box { background:#F9FAFB; padding:16px; border-radius:var(--radius-M); margin-bottom:12px; border-left:5px solid var(--toss-blue); text-align:left; }
+        .warning-box { background:#F2F4F6; padding:14px; border-radius:var(--radius-M); margin-top:15px; color:var(--toss-text-gray); font-size:13px; text-align:center; }
+        .modal-btn-group { display:flex; flex-direction:column; gap:8px; margin-top:20px; }
+        .btn-yes { background-color:var(--toss-blue); color:white; padding:14px; border:none; border-radius:12px; font-weight:600; }
+        .btn-no { background-color:#FFEBEB; color:#E31A1A; padding:14px; border:none; border-radius:12px; font-weight:600; }
+        .btn-cancel { background-color:white; color:var(--toss-text-gray); padding:14px; border:1px solid #ddd; border-radius:12px; font-weight:600; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="global-loader" class="loader-wrapper"><div class="loader"></div></div>
+    <h2>📊 조창성T 수학 과제 분석</h2>
+    <div id="screen-login" class="screen active">
+        <p style="text-align:center; color:var(--toss-text-gray); margin-bottom:5px;">수업을 선택하고 로그인하세요</p>
+        <select id="login-class-select">
+            <option value="" disabled selected>수업 불러오는 중...</option>
+        </select>
+        <input type="text" id="input-name" placeholder="이름 (예: 홍길동)">
+        <input type="password" id="input-pw" placeholder="비밀번호 (전화번호 뒤 4자리)">
+        <button class="primary" onclick="goToChapterSelect()">내 진도표 보기</button>
+    </div>
+    <div id="screen-chapter" class="screen">
+        <h3 id="chapter-title">학습할 단원을 선택하세요</h3>
+        <div style="margin-bottom:15px;"><select id="class-filter" onchange="filterChapters()"><option value="all">전체 수업 보기</option></select></div>
+        <div id="chapter-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+        <button onclick="logout()" style="background-color:#F2F4F6; color:var(--toss-text-gray); margin-top:20px; width:100%; padding:16px; border:none; border-radius:16px;">로그아웃</button>
+    </div>
+    <div id="screen-game" class="screen">
+        <h3 id="game-title" style="text-align:center; margin:0 0 20px 0;"></h3>
+        <div id="tier-badge" class="tier-badge tier-iron">
+            <div class="tier-row"><span class="tier-icon">🛡️</span> <span class="tier-name">IRON</span></div>
+            <div class="rank-text" id="rank-display">순위 계산중...</div>
+            <div class="tier-progress-bg"><div id="tier-progress-fill" class="tier-progress-fill"></div></div>
+        </div>
+        <div class="chart-container"><canvas id="progressChart"></canvas></div>
+        <div class="filter-options">
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="0" hidden>⚪ 안품</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="1" hidden>🟢 맞음</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="2" hidden>🔴 틀림</label>
+            <label class="filter-label"><input type="checkbox" checked onchange="applyViewFilter()" value="3" hidden>✅ 고침</label>
+        </div>
+        <div class="grid-container" id="grid-box"></div>
+        
+        <textarea id="student-comment" placeholder="선생님께 남기고 싶은 말&#10;예: 20번 오타있어요.&#10;예: 33번 답이 없어요."></textarea>
+
+        <div style="text-align:center; margin-top:10px;">
+            <div id="save-status" style="height:20px; font-size:14px; font-weight:600; margin-bottom:8px;"></div>
+            <div style="display:flex; gap:10px;">
+                <button class="analyze" onclick="analyzePerformance()" style="flex:1;">🤖 AI 분석</button>
+                <button class="primary" onclick="saveData()" style="flex:2;">저장 및 제출</button>
+            </div>
+            <button onclick="checkBackNavigation()" style="background-color:transparent; color:var(--toss-text-gray); padding:12px; margin-top:10px; width:100%; border:none;">← 목록으로</button>
+        </div>
+    </div>
+</div>
+<div id="analysis-modal" class="modal-overlay" onclick="closeModal(event, 'analysis-modal')"><div class="modal-content"><h3 style="margin-top:0;">📊 학습 분석 리포트</h3><div id="analysis-content"></div><button onclick="document.getElementById('analysis-modal').style.display='none'" style="width:100%; padding:16px; background:#F2F4F6; border:none; border-radius:16px; margin-top:20px; font-weight:600;">닫기</button></div></div>
+<div id="exit-modal" class="modal-overlay"><div class="modal-content"><h3 style="margin-bottom:10px;">잠깐만요! 🛑</h3><p style="color:var(--toss-text-gray); margin-bottom:20px;">저장하지 않은 변경사항이 있습니다.<br>저장하고 목록으로 나갈까요?</p><div class="modal-btn-group"><button class="btn-yes" onclick="saveAndExit()">네, 저장하고 나갈래요</button><button class="btn-no" onclick="exitWithoutSave()">아니요, 그냥 나갈래요</button><button class="btn-cancel" onclick="document.getElementById('exit-modal').style.display='none'">취소 (계속 풀기)</button></div></div></div>
+
 <script>
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxDXsi0z7BzBF1BaeVHj1YcTpvxCKWWXHPXbUP9ohWPKl6SxIA3HgEolkcwtf15c5Fz/exec"; 
     
@@ -79,7 +212,6 @@
         
         // 1. 캐시(메모리)에 데이터가 있는지 확인
         if (sheetCache[sheetName]) {
-            // console.log("🚀 캐시된 데이터 사용: " + sheetName);
             currentClassData = sheetCache[sheetName]; 
             renderGameUI(sheetName); // 화면 그리기 (함수 분리함)
             return;
@@ -310,3 +442,5 @@
     function showScreen(id) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
     function logout() { userCredentials = {}; location.reload(); }
 </script>
+</body>
+</html>
